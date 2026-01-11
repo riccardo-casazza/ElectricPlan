@@ -1,0 +1,27 @@
+<div id="<%= dom_id item %>">
+  <p>
+    <strong>Name:</strong>
+    <%= item.name %>
+  </p>
+
+  <p>
+    <strong>Item Type:</strong>
+    <%= item.item_type.name %>
+  </p>
+
+  <p>
+    <strong>Room:</strong>
+    <%= item.room.floor.name %> - <%= item.room.name %>
+  </p>
+
+  <p>
+    <strong>Breaker:</strong>
+    <%= item.breaker.name %> (RCD: <%= item.breaker.residual_current_device.name %>)
+  </p>
+
+  <p>
+    <strong>Input Cable:</strong>
+    <%= item.input_cable&.section || "N/A" %>
+  </p>
+
+</div>

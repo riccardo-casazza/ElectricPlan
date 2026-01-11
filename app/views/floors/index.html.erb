@@ -1,0 +1,44 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Floors" %>
+
+<div style="margin-bottom: 1rem;">
+  <%= link_to "← Back to Home", root_path %>
+</div>
+
+<h1>Floors</h1>
+
+<div style="margin: 1.5rem 0;">
+  <%= link_to "New Floor", new_floor_path, class: "button-primary" %>
+</div>
+
+<% if @new_floor %>
+  <%= form_with(model: @new_floor, html: { id: dom_id(@new_floor, :form) }) do |form| %>
+  <% end %>
+<% end %>
+
+<table class="crud-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Rooms</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if @new_floor %>
+      <%= render "floor_row", floor: @new_floor, editing: true %>
+    <% end %>
+
+    <% @floors.each do |floor| %>
+      <% is_editing = @new_floor&.persisted? && @new_floor.id == floor.id %>
+      <% unless is_editing %>
+        <%= render "floor_row", floor: floor, editing: false %>
+      <% end %>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @floors.empty? %>
+  <p style="margin-top: 2rem; color: #666;">No floors yet. Click "New Floor" to add one.</p>
+<% end %>

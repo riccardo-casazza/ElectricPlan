@@ -1,0 +1,46 @@
+<%= form_with(model: item, class: "crud-form") do |form| %>
+  <% if item.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(item.errors.count, "error") %> prohibited this item from being saved:</h3>
+      <ul>
+        <% item.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :name, "Item Name" %>
+    <%= form.text_field :name, class: "form-input" %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :item_type_id, "Item Type" %>
+    <%= form.collection_select :item_type_id, ItemType.all, :id, :name,
+        { prompt: "Select a type" }, { class: "form-input", data: { controller: "select" } } %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :room_id, "Room" %>
+    <%= form.collection_select :room_id, Room.all, :id, ->(room) { "#{room.floor.name} - #{room.name}" },
+        { prompt: "Select a room" }, { class: "form-input", data: { controller: "select" } } %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :breaker_id, "Breaker" %>
+    <%= form.collection_select :breaker_id, Breaker.all, :id, ->(breaker) { "#{breaker.name} (RCD: #{breaker.residual_current_device.name})" },
+        { prompt: "Select a breaker" }, { class: "form-input", data: { controller: "select" } } %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :input_cable_id, "Input Cable" %>
+    <%= form.collection_select :input_cable_id, Cable.all, :id, :section,
+        { prompt: "Select a cable section", include_blank: true }, { class: "form-input", data: { controller: "select" } } %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "button-primary" %>
+    <%= link_to "Cancel", items_path, class: "button-secondary" %>
+  </div>
+<% end %>

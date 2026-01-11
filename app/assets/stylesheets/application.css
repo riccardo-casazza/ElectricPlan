@@ -1,0 +1,195 @@
+/*
+ * This is a manifest file that'll be compiled into application.css.
+ *
+ * With Propshaft, assets are served efficiently without preprocessing steps. You can still include
+ * application-wide styles in this file, but keep in mind that CSS precedence will follow the standard
+ * cascading order, meaning styles declared later in the document or manifest will override earlier ones,
+ * depending on specificity.
+ *
+ * Consider organizing styles into separate files for maintainability.
+ */
+
+/* Base Styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+h1 {
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+/* Table Styles */
+.crud-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+.crud-table thead {
+  background-color: #3498db;
+  color: white;
+}
+
+.crud-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.crud-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.crud-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.crud-table .actions {
+  white-space: nowrap;
+}
+
+/* Button Styles */
+.button-primary,
+.button-secondary,
+.button-danger,
+.button-small {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-right: 0.5rem;
+}
+
+.button-primary {
+  background-color: #3498db;
+  color: white;
+}
+
+.button-primary:hover {
+  background-color: #2980b9;
+}
+
+.button-secondary {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.button-secondary:hover {
+  background-color: #7f8c8d;
+}
+
+.button-danger {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.button-danger:hover {
+  background-color: #c0392b;
+}
+
+.button-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  background-color: #3498db;
+  color: white;
+}
+
+.button-small:hover {
+  background-color: #2980b9;
+}
+
+.button-small.button-secondary {
+  background-color: #95a5a6;
+}
+
+.button-small.button-secondary:hover {
+  background-color: #7f8c8d;
+}
+
+.button-small.button-danger {
+  background-color: #e74c3c;
+}
+
+.button-small.button-danger:hover {
+  background-color: #c0392b;
+}
+
+/* Form Styles */
+.crud-form {
+  max-width: 600px;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
+}
+
+.form-field {
+  margin-bottom: 1.5rem;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.form-actions {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+/* Error Messages */
+.error-messages {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.error-messages h3 {
+  color: #c0392b;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.error-messages ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.error-messages li {
+  color: #c0392b;
+}

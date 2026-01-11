@@ -1,0 +1,2 @@
+module ResidualCurrentDevicesHelper
+end

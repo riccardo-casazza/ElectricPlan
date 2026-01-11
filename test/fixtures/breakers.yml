@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  residual_current_device: one
+  position: 1
+  max_current: 1
+  description: MyText
+  name: MyString
+
+two:
+  residual_current_device: two
+  position: 1
+  max_current: 1
+  description: MyText
+  name: MyString

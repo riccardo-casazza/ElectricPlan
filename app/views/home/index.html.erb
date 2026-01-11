@@ -1,0 +1,58 @@
+<% content_for :title, "ElectricPlan" %>
+
+<h1>ElectricPlan</h1>
+<p>Welcome to ElectricPlan. Choose a section to manage:</p>
+
+<div style="margin-top: 2rem;">
+  <h2>Management Sections</h2>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Floors", floors_path %></h3>
+    <p>Add, view, edit, and delete floors in your building.</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Rooms", rooms_path %></h3>
+    <p>Manage rooms and assign them to floors.</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Electrical Panels", electrical_panels_path %></h3>
+    <p>Manage electrical panels installed in rooms (auto-named by floor/room initials).</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Residual Current Devices", residual_current_devices_path %></h3>
+    <p>Manage RCDs (residual current devices) installed in electrical panels.</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Breakers", breakers_path %></h3>
+    <p>Manage breakers installed in RCDs (auto-named by RCD/position/current).</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Items", items_path %></h3>
+    <p>Manage electrical items connected to breakers in rooms.</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Cables", cables_path %></h3>
+    <p>Manage cable sections available for installation.</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Item Types", item_types_path %></h3>
+    <p>Manage electrical item types (cooktop, light, socket, etc.).</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "RCD Types", residual_current_device_types_path %></h3>
+    <p>Manage RCD types (A, AC, F).</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Compliance Rules", rules_path %></h3>
+    <p>Manage NF C 15-100 compliance rules with YAML definitions.</p>
+  </div>
+</div>

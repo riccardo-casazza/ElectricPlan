@@ -1,0 +1,47 @@
+<%= form_with(model: residual_current_device, class: "crud-form") do |form| %>
+  <% if residual_current_device.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(residual_current_device.errors.count, "error") %> prohibited this RCD from being saved:</h3>
+      <ul>
+        <% residual_current_device.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :electrical_panel_id, "Electrical Panel" %>
+    <%= form.collection_select :electrical_panel_id, ElectricalPanel.all, :id, ->(panel) { "#{panel.name} (#{panel.room.floor.name} - #{panel.room.name})" },
+        { prompt: "Select a panel" }, { class: "form-input", data: { controller: "select" } } %>
+    <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
+      The RCD name will be automatically generated from the panel ID, row, position, and max current.
+    </p>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :row_number, "Row Number" %>
+    <%= form.number_field :row_number, class: "form-input" %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :position %>
+    <%= form.number_field :position, class: "form-input" %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :output_max_current, "Output Max Current (A)" %>
+    <%= form.number_field :output_max_current, class: "form-input" %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :residual_current_device_type_id, "RCD Type" %>
+    <%= form.collection_select :residual_current_device_type_id, ResidualCurrentDeviceType.all, :id, :name,
+        { prompt: "Select a type" }, { class: "form-input", data: { controller: "select" } } %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "button-primary" %>
+    <%= link_to "Cancel", residual_current_devices_path, class: "button-secondary" %>
+  </div>
+<% end %>

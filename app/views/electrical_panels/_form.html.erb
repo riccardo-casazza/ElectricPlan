@@ -1,0 +1,37 @@
+<%= form_with(model: electrical_panel, class: "crud-form") do |form| %>
+  <% if electrical_panel.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(electrical_panel.errors.count, "error") %> prohibited this electrical panel from being saved:</h3>
+      <ul>
+        <% electrical_panel.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :room_id, "Room" %>
+    <%= form.collection_select :room_id, Room.all, :id, ->(room) { "#{room.floor.name} - #{room.name}" },
+        { prompt: "Select a room" }, { class: "form-input", data: { controller: "select" } } %>
+    <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
+      The panel name will be automatically generated from the floor and room initials.
+    </p>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :input_max_current, "Input Max Current (A)" %>
+    <%= form.number_field :input_max_current, class: "form-input" %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :input_cable_id, "Input Cable" %>
+    <%= form.collection_select :input_cable_id, Cable.all, :id, :section,
+        { prompt: "Select a cable section", include_blank: true }, { class: "form-input", data: { controller: "select" } } %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "button-primary" %>
+    <%= link_to "Cancel", electrical_panels_path, class: "button-secondary" %>
+  </div>
+<% end %>

@@ -1,0 +1,68 @@
+<% editing ||= false %>
+<% if editing %>
+  <% form_id = dom_id(item, :form) %>
+  <% if item.errors.any? %>
+    <tr>
+      <td colspan="6" style="background-color: #fee; padding: 1rem;">
+        <strong><%= pluralize(item.errors.count, "error") %> prohibited this item from being saved:</strong>
+        <ul style="margin: 0.5rem 0 0 1.5rem;">
+          <% item.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </td>
+    </tr>
+  <% end %>
+  <tr class="editing" id="<%= dom_id(item) %>">
+    <td><input type="text" name="item[name]" value="<%= item.name %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;"></td>
+    <td>
+      <select name="item[item_type_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;" data-controller="select">
+        <option value="">Select a type</option>
+        <% ItemType.all.each do |type| %>
+          <option value="<%= type.id %>" <%= 'selected' if item.item_type_id == type.id %>><%= type.name %></option>
+        <% end %>
+      </select>
+    </td>
+    <td>
+      <select name="item[room_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 200px;" data-controller="select">
+        <option value="">Select a room</option>
+        <% Room.all.each do |room| %>
+          <option value="<%= room.id %>" <%= 'selected' if item.room_id == room.id %>><%= room.floor.name %> - <%= room.name %></option>
+        <% end %>
+      </select>
+    </td>
+    <td>
+      <select name="item[breaker_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 200px;" data-controller="select">
+        <option value="">Select a breaker</option>
+        <% Breaker.all.each do |breaker| %>
+          <option value="<%= breaker.id %>" <%= 'selected' if item.breaker_id == breaker.id %>><%= breaker.name %> (RCD: <%= breaker.residual_current_device.name %>)</option>
+        <% end %>
+      </select>
+    </td>
+    <td>
+      <select name="item[input_cable_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 120px;" data-controller="select">
+        <option value="">Select a cable</option>
+        <% Cable.all.each do |cable| %>
+          <option value="<%= cable.id %>" <%= 'selected' if item.input_cable_id == cable.id %>><%= cable.section %></option>
+        <% end %>
+      </select>
+    </td>
+    <td class="actions">
+      <input type="submit" value="Save" form="<%= form_id %>" class="button-small button-primary">
+      <%= link_to "Cancel", items_path, class: "button-small button-secondary" %>
+    </td>
+  </tr>
+<% else %>
+  <tr id="<%= dom_id(item) %>">
+    <td><%= item.name %></td>
+    <td><%= item.item_type.name %></td>
+    <td><%= item.room.floor.name %> - <%= item.room.name %></td>
+    <td><%= item.breaker.name %></td>
+    <td><%= item.input_cable&.section || "N/A" %></td>
+    <td class="actions">
+      <%= link_to "Edit", edit_item_path(item), class: "button-small button-secondary" %>
+      <%= button_to "Delete", item, method: :delete, class: "button-small button-danger",
+          form: { data: { turbo_confirm: "Are you sure?" } } %>
+    </td>
+  </tr>
+<% end %>

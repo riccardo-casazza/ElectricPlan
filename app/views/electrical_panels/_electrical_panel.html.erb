@@ -1,0 +1,27 @@
+<div id="<%= dom_id electrical_panel %>">
+  <p>
+    <strong>Name:</strong>
+    <%= electrical_panel.name %>
+  </p>
+
+  <p>
+    <strong>Room:</strong>
+    <%= electrical_panel.room.name %>
+  </p>
+
+  <p>
+    <strong>Floor:</strong>
+    <%= electrical_panel.room.floor.name %>
+  </p>
+
+  <p>
+    <strong>Input Max Current:</strong>
+    <%= electrical_panel.input_max_current %> A
+  </p>
+
+  <p>
+    <strong>Input Cable:</strong>
+    <%= electrical_panel.input_cable&.section || "N/A" %>
+  </p>
+
+</div>

@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  rule: one
+  resource_type: MyString
+  resource_id: 1
+  severity: MyString
+  message: MyText
+  context: 
+  resolved: false
+
+two:
+  rule: two
+  resource_type: MyString
+  resource_id: 1
+  severity: MyString
+  message: MyText
+  context: 
+  resolved: false

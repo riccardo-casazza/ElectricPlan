@@ -1,0 +1,32 @@
+<% editing ||= false %>
+<% if editing %>
+  <% form_id = dom_id(cable, :form) %>
+  <% if cable.errors.any? %>
+    <tr>
+      <td colspan="2" style="background-color: #fee; padding: 1rem;">
+        <strong><%= pluralize(cable.errors.count, "error") %> prohibited this cable from being saved:</strong>
+        <ul style="margin: 0.5rem 0 0 1.5rem;">
+          <% cable.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </td>
+    </tr>
+  <% end %>
+  <tr class="editing" id="<%= dom_id(cable) %>">
+    <td><input type="text" name="cable[section]" value="<%= cable.section %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;"></td>
+    <td class="actions">
+      <input type="submit" value="Save" form="<%= form_id %>" class="button-small button-primary">
+      <%= link_to "Cancel", cables_path, class: "button-small button-secondary" %>
+    </td>
+  </tr>
+<% else %>
+  <tr id="<%= dom_id(cable) %>">
+    <td><%= cable.section %></td>
+    <td class="actions">
+      <%= link_to "Edit", edit_cable_path(cable), class: "button-small button-secondary" %>
+      <%= button_to "Delete", cable, method: :delete, class: "button-small button-danger",
+          form: { data: { turbo_confirm: "Are you sure you want to delete this cable?" } } %>
+    </td>
+  </tr>
+<% end %>

@@ -1,0 +1,47 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Items" %>
+
+<div style="margin-bottom: 1rem;">
+  <%= link_to "← Back to Home", root_path %>
+</div>
+
+<h1>Items</h1>
+
+<div style="margin: 1.5rem 0;">
+  <%= link_to "New Item", new_item_path, class: "button-primary" %>
+</div>
+
+<% if @new_item %>
+  <%= form_with(model: @new_item, html: { id: dom_id(@new_item, :form) }) do |form| %>
+  <% end %>
+<% end %>
+
+<table class="crud-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Room</th>
+      <th>Breaker</th>
+      <th>Input Cable</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if @new_item %>
+      <%= render "item_row", item: @new_item, editing: true %>
+    <% end %>
+
+    <% @items.each do |item| %>
+      <% is_editing = @new_item&.persisted? && @new_item.id == item.id %>
+      <% unless is_editing %>
+        <%= render "item_row", item: item, editing: false %>
+      <% end %>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @items.empty? && !@new_item %>
+  <p style="margin-top: 2rem; color: #666;">No items yet. Click "New Item" to add one.</p>
+<% end %>

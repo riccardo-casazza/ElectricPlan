@@ -1,0 +1,1 @@
+json.partial! "residual_current_device_types/residual_current_device_type", residual_current_device_type: @residual_current_device_type

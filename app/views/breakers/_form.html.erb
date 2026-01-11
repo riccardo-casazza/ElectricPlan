@@ -1,0 +1,41 @@
+<%= form_with(model: breaker, class: "crud-form") do |form| %>
+  <% if breaker.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(breaker.errors.count, "error") %> prohibited this breaker from being saved:</h3>
+      <ul>
+        <% breaker.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :residual_current_device_id, "Residual Current Device (RCD)" %>
+    <%= form.collection_select :residual_current_device_id, ResidualCurrentDevice.all, :id, ->(rcd) { "#{rcd.name} (Panel: #{rcd.electrical_panel.name})" },
+        { prompt: "Select an RCD" }, { class: "form-input", data: { controller: "select" } } %>
+    <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
+      The breaker name will be automatically generated from the RCD name, position, and max current.
+    </p>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :position %>
+    <%= form.number_field :position, class: "form-input" %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :output_max_current, "Output Max Current (A)" %>
+    <%= form.number_field :output_max_current, class: "form-input" %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :description %>
+    <%= form.text_area :description, class: "form-input", rows: 4 %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "button-primary" %>
+    <%= link_to "Cancel", breakers_path, class: "button-secondary" %>
+  </div>
+<% end %>

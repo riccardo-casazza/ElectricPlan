@@ -1,0 +1,32 @@
+<div id="<%= dom_id residual_current_device %>">
+  <p>
+    <strong>Name:</strong>
+    <%= residual_current_device.name %>
+  </p>
+
+  <p>
+    <strong>Electrical panel:</strong>
+    <%= residual_current_device.electrical_panel.name %> (<%= residual_current_device.electrical_panel.room.floor.name %> - <%= residual_current_device.electrical_panel.room.name %>)
+  </p>
+
+  <p>
+    <strong>Row number:</strong>
+    <%= residual_current_device.row_number %>
+  </p>
+
+  <p>
+    <strong>Position:</strong>
+    <%= residual_current_device.position %>
+  </p>
+
+  <p>
+    <strong>Output Max Current:</strong>
+    <%= residual_current_device.output_max_current %> A
+  </p>
+
+  <p>
+    <strong>Type:</strong>
+    <%= residual_current_device.residual_current_device_type.name %>
+  </p>
+
+</div>

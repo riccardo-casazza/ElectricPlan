@@ -1,0 +1,41 @@
+<% editing ||= false %>
+<% if editing %>
+  <% form_id = dom_id(room, :form) %>
+  <% if room.errors.any? %>
+    <tr>
+      <td colspan="3" style="background-color: #fee; padding: 1rem;">
+        <strong><%= pluralize(room.errors.count, "error") %> prohibited this room from being saved:</strong>
+        <ul style="margin: 0.5rem 0 0 1.5rem;">
+          <% room.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </td>
+    </tr>
+  <% end %>
+  <tr class="editing" id="<%= dom_id(room) %>">
+    <td><input type="text" name="room[name]" value="<%= room.name %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;"></td>
+    <td>
+      <select name="room[floor_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;" data-controller="select">
+        <option value="">Select a floor</option>
+        <% Floor.all.each do |floor| %>
+          <option value="<%= floor.id %>" <%= 'selected' if room.floor_id == floor.id %>><%= floor.name %></option>
+        <% end %>
+      </select>
+    </td>
+    <td class="actions">
+      <input type="submit" value="Save" form="<%= form_id %>" class="button-small button-primary">
+      <%= link_to "Cancel", rooms_path, class: "button-small button-secondary" %>
+    </td>
+  </tr>
+<% else %>
+  <tr id="<%= dom_id(room) %>">
+    <td><%= room.name %></td>
+    <td><%= room.floor.name %></td>
+    <td class="actions">
+      <%= link_to "Edit", edit_room_path(room), class: "button-small button-secondary" %>
+      <%= button_to "Delete", room, method: :delete, class: "button-small button-danger",
+          form: { data: { turbo_confirm: "Are you sure you want to delete this room?" } } %>
+    </td>
+  </tr>
+<% end %>

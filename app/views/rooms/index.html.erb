@@ -1,0 +1,44 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Rooms" %>
+
+<div style="margin-bottom: 1rem;">
+  <%= link_to "← Back to Home", root_path %>
+</div>
+
+<h1>Rooms</h1>
+
+<div style="margin: 1.5rem 0;">
+  <%= link_to "New Room", new_room_path, class: "button-primary" %>
+</div>
+
+<% if @new_room %>
+  <%= form_with(model: @new_room, html: { id: dom_id(@new_room, :form) }) do |form| %>
+  <% end %>
+<% end %>
+
+<table class="crud-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Floor</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if @new_room %>
+      <%= render "room_row", room: @new_room, editing: true %>
+    <% end %>
+
+    <% @rooms.each do |room| %>
+      <% is_editing = @new_room&.persisted? && @new_room.id == room.id %>
+      <% unless is_editing %>
+        <%= render "room_row", room: room, editing: false %>
+      <% end %>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @rooms.empty? %>
+  <p style="margin-top: 2rem; color: #666;">No rooms yet. Click "New Room" to add one.</p>
+<% end %>

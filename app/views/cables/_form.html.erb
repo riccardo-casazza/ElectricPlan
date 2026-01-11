@@ -1,0 +1,22 @@
+<%= form_with(model: cable, class: "crud-form") do |form| %>
+  <% if cable.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(cable.errors.count, "error") %> prohibited this cable from being saved:</h3>
+      <ul>
+        <% cable.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :section %>
+    <%= form.text_field :section, class: "form-input" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "button-primary" %>
+    <%= link_to "Cancel", cables_path, class: "button-secondary" %>
+  </div>
+<% end %>

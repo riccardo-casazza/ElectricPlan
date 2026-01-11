@@ -1,0 +1,43 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Item types" %>
+
+<div style="margin-bottom: 1rem;">
+  <%= link_to "← Back to Home", root_path %>
+</div>
+
+<h1>Item Types</h1>
+
+<div style="margin: 1.5rem 0;">
+  <%= link_to "New Item Type", new_item_type_path, class: "button-primary" %>
+</div>
+
+<% if @new_item_type %>
+  <%= form_with(model: @new_item_type, html: { id: dom_id(@new_item_type, :form) }) do |form| %>
+  <% end %>
+<% end %>
+
+<table class="crud-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if @new_item_type %>
+      <%= render "item_type_row", item_type: @new_item_type, editing: true %>
+    <% end %>
+
+    <% @item_types.each do |item_type| %>
+      <% is_editing = @new_item_type&.persisted? && @new_item_type.id == item_type.id %>
+      <% unless is_editing %>
+        <%= render "item_type_row", item_type: item_type, editing: false %>
+      <% end %>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @item_types.empty? %>
+  <p style="margin-top: 2rem; color: #666;">No item types yet. Click "New Item Type" to add one.</p>
+<% end %>

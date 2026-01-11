@@ -1,0 +1,47 @@
+<% editing ||= false %>
+<% if editing %>
+  <% form_id = dom_id(breaker, :form) %>
+  <% if breaker.errors.any? %>
+    <tr>
+      <td colspan="6" style="background-color: #fee; padding: 1rem;">
+        <strong><%= pluralize(breaker.errors.count, "error") %> prohibited this breaker from being saved:</strong>
+        <ul style="margin: 0.5rem 0 0 1.5rem;">
+          <% breaker.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </td>
+    </tr>
+  <% end %>
+  <tr class="editing" id="<%= dom_id(breaker) %>">
+    <td><%= breaker.name || "Auto-generated" %></td>
+    <td>
+      <select name="breaker[residual_current_device_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;" data-controller="select">
+        <option value="">Select an RCD</option>
+        <% ResidualCurrentDevice.all.each do |rcd| %>
+          <option value="<%= rcd.id %>" <%= 'selected' if breaker.residual_current_device_id == rcd.id %>><%= rcd.name %></option>
+        <% end %>
+      </select>
+    </td>
+    <td><input type="number" name="breaker[position]" value="<%= breaker.position %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 80px;"></td>
+    <td><input type="number" name="breaker[output_max_current]" value="<%= breaker.output_max_current %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 80px;"></td>
+    <td><input type="text" name="breaker[description]" value="<%= breaker.description %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;"></td>
+    <td class="actions">
+      <input type="submit" value="Save" form="<%= form_id %>" class="button-small button-primary">
+      <%= link_to "Cancel", breakers_path, class: "button-small button-secondary" %>
+    </td>
+  </tr>
+<% else %>
+  <tr id="<%= dom_id(breaker) %>">
+    <td><%= breaker.name %></td>
+    <td><%= breaker.residual_current_device.name %></td>
+    <td><%= breaker.position %></td>
+    <td><%= breaker.output_max_current %></td>
+    <td><%= breaker.description %></td>
+    <td class="actions">
+      <%= link_to "Edit", edit_breaker_path(breaker), class: "button-small button-secondary" %>
+      <%= button_to "Delete", breaker, method: :delete, class: "button-small button-danger",
+          form: { data: { turbo_confirm: "Are you sure you want to delete this breaker?" } } %>
+    </td>
+  </tr>
+<% end %>

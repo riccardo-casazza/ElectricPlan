@@ -1,0 +1,22 @@
+<%= form_with(model: item_type, class: "crud-form") do |form| %>
+  <% if item_type.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(item_type.errors.count, "error") %> prohibited this item type from being saved:</h3>
+      <ul>
+        <% item_type.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :name %>
+    <%= form.text_field :name, class: "form-input" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "button-primary" %>
+    <%= link_to "Cancel", item_types_path, class: "button-secondary" %>
+  </div>
+<% end %>

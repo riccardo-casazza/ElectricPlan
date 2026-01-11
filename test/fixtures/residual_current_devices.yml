@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  electrical_panel: one
+  row_number: 1
+  position: 1
+  max_current: 1
+  residual_current_device_type: one
+
+two:
+  electrical_panel: two
+  row_number: 1
+  position: 1
+  max_current: 1
+  residual_current_device_type: two

@@ -1,0 +1,22 @@
+<%= form_with(model: floor, class: "crud-form") do |form| %>
+  <% if floor.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(floor.errors.count, "error") %> prohibited this floor from being saved:</h3>
+      <ul>
+        <% floor.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :name %>
+    <%= form.text_field :name, class: "form-input" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "button-primary" %>
+    <%= link_to "Cancel", floors_path, class: "button-secondary" %>
+  </div>
+<% end %>

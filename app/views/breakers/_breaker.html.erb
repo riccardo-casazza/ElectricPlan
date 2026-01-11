@@ -1,0 +1,27 @@
+<div id="<%= dom_id breaker %>">
+  <p>
+    <strong>Name:</strong>
+    <%= breaker.name %>
+  </p>
+
+  <p>
+    <strong>Residual Current Device:</strong>
+    <%= breaker.residual_current_device.name %> (<%= breaker.residual_current_device.electrical_panel.name %>)
+  </p>
+
+  <p>
+    <strong>Position:</strong>
+    <%= breaker.position %>
+  </p>
+
+  <p>
+    <strong>Output Max Current:</strong>
+    <%= breaker.output_max_current %> A
+  </p>
+
+  <p>
+    <strong>Description:</strong>
+    <%= breaker.description %>
+  </p>
+
+</div>

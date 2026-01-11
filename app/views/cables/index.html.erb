@@ -1,0 +1,43 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Cables" %>
+
+<div style="margin-bottom: 1rem;">
+  <%= link_to "← Back to Home", root_path %>
+</div>
+
+<h1>Cables</h1>
+
+<div style="margin: 1.5rem 0;">
+  <%= link_to "New Cable", new_cable_path, class: "button-primary" %>
+</div>
+
+<% if @new_cable %>
+  <%= form_with(model: @new_cable, html: { id: dom_id(@new_cable, :form) }) do |form| %>
+  <% end %>
+<% end %>
+
+<table class="crud-table">
+  <thead>
+    <tr>
+      <th>Section</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if @new_cable %>
+      <%= render "cable_row", cable: @new_cable, editing: true %>
+    <% end %>
+
+    <% @cables.each do |cable| %>
+      <% is_editing = @new_cable&.persisted? && @new_cable.id == cable.id %>
+      <% unless is_editing %>
+        <%= render "cable_row", cable: cable, editing: false %>
+      <% end %>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @cables.empty? %>
+  <p style="margin-top: 2rem; color: #666;">No cables yet. Click "New Cable" to add one.</p>
+<% end %>
