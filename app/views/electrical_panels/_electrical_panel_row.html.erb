@@ -14,16 +14,26 @@
     </tr>
   <% end %>
   <tr class="editing" id="<%= dom_id(electrical_panel) %>">
-    <td><input type="text" name="electrical_panel[name]" value="<%= electrical_panel.name %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;"></td>
+    <td style="color: #666; font-style: italic;">
+      <% if electrical_panel.persisted? %>
+        <%= electrical_panel.name %>
+      <% else %>
+        (auto-generated)
+      <% end %>
+    </td>
     <td>
-      <select name="electrical_panel[room_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;" data-controller="select">
+      <select name="electrical_panel[room_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 200px;" data-controller="select">
         <option value="">Select a room</option>
-        <% Room.all.each do |room| %>
-          <option value="<%= room.id %>" <%= 'selected' if electrical_panel.room_id == room.id %>><%= room.name %></option>
+        <% Room.includes(:floor).order('floors.name, rooms.name').each do |room| %>
+          <option value="<%= room.id %>" <%= 'selected' if electrical_panel.room_id == room.id %>>
+            <%= "#{room.floor.name} - #{room.name}" %>
+          </option>
         <% end %>
       </select>
     </td>
-    <td><%= electrical_panel.persisted? && electrical_panel.room ? electrical_panel.room.floor.name : "N/A" %></td>
+    <td style="color: #666;">
+      <%= electrical_panel.persisted? && electrical_panel.room ? electrical_panel.room.floor.name : "N/A" %>
+    </td>
     <td><input type="number" name="electrical_panel[input_max_current]" value="<%= electrical_panel.input_max_current %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 100px;"></td>
     <td>
       <select name="electrical_panel[input_cable_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;" data-controller="select">
@@ -41,7 +51,7 @@
 <% else %>
   <tr id="<%= dom_id(electrical_panel) %>">
     <td><%= electrical_panel.name %></td>
-    <td><%= electrical_panel.room.name %></td>
+    <td><%= "#{electrical_panel.room.floor.name} - #{electrical_panel.room.name}" %></td>
     <td><%= electrical_panel.room.floor.name %></td>
     <td><%= electrical_panel.input_max_current %></td>
     <td><%= electrical_panel.input_cable&.section || "N/A" %></td>
