@@ -3,7 +3,7 @@
   <% form_id = dom_id(electrical_panel, :form) %>
   <% if electrical_panel.errors.any? %>
     <tr>
-      <td colspan="6" style="background-color: #fee; padding: 1rem;">
+      <td colspan="5" style="background-color: #fee; padding: 1rem;">
         <strong><%= pluralize(electrical_panel.errors.count, "error") %> prohibited this electrical panel from being saved:</strong>
         <ul style="margin: 0.5rem 0 0 1.5rem;">
           <% electrical_panel.errors.each do |error| %>
@@ -22,19 +22,18 @@
       <% end %>
     </td>
     <td>
-      <select name="electrical_panel[room_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 200px;" data-controller="select">
+      <select name="electrical_panel[room_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 200px;" data-controller="select" data-action="change->electrical-panel#updateFloor" data-electrical-panel-target="roomSelect">
         <option value="">Select a room</option>
         <% Room.includes(:floor).order('floors.name, rooms.name').each do |room| %>
-          <option value="<%= room.id %>" <%= 'selected' if electrical_panel.room_id == room.id %>>
+          <option value="<%= room.id %>" data-floor="<%= room.floor.name %>" <%= 'selected' if electrical_panel.room_id == room.id %>>
             <%= "#{room.floor.name} - #{room.name}" %>
           </option>
         <% end %>
       </select>
     </td>
-    <td style="color: #666;">
+    <td style="color: #666;" data-electrical-panel-target="floorDisplay">
       <%= electrical_panel.persisted? && electrical_panel.room ? electrical_panel.room.floor.name : "N/A" %>
     </td>
-    <td><input type="number" name="electrical_panel[input_max_current]" value="<%= electrical_panel.input_max_current %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 100px;"></td>
     <td>
       <select name="electrical_panel[input_cable_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;" data-controller="select">
         <option value="">Select a cable</option>
@@ -53,7 +52,6 @@
     <td><%= electrical_panel.name %></td>
     <td><%= "#{electrical_panel.room.floor.name} - #{electrical_panel.room.name}" %></td>
     <td><%= electrical_panel.room.floor.name %></td>
-    <td><%= electrical_panel.input_max_current %></td>
     <td><%= electrical_panel.input_cable&.section || "N/A" %></td>
     <td class="actions">
       <%= link_to "Edit", edit_electrical_panel_path(electrical_panel), class: "button-small button-secondary" %>
