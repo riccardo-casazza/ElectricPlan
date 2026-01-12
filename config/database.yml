@@ -41,21 +41,26 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  primary: &primary_production
-    <<: *default
-    database: <%= ENV.fetch("DATABASE_NAME") { "electric_plan_production" } %>
-    host: <%= ENV.fetch("DATABASE_HOST") { "localhost" } %>
-    username: <%= ENV.fetch("DATABASE_USER") { "root" } %>
-    password: <%= ENV["DATABASE_PASSWORD"] %>
+  primary:
+    adapter: sqlite3
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
+    database: storage/production.sqlite3
   cache:
-    <<: *primary_production
-    database: <%= ENV.fetch("DATABASE_CACHE_NAME") { "electric_plan_production_cache" } %>
+    adapter: sqlite3
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
+    database: storage/production_cache.sqlite3
     migrations_paths: db/cache_migrate
   queue:
-    <<: *primary_production
-    database: <%= ENV.fetch("DATABASE_QUEUE_NAME") { "electric_plan_production_queue" } %>
+    adapter: sqlite3
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
+    database: storage/production_queue.sqlite3
     migrations_paths: db/queue_migrate
   cable:
-    <<: *primary_production
-    database: <%= ENV.fetch("DATABASE_CABLE_NAME") { "electric_plan_production_cable" } %>
+    adapter: sqlite3
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
+    database: storage/production_cable.sqlite3
     migrations_paths: db/cable_migrate
