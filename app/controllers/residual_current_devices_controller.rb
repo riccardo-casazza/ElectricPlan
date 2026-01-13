@@ -74,6 +74,6 @@ class ResidualCurrentDevicesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def residual_current_device_params
-      params.expect(residual_current_device: [ :electrical_panel_id, :row_number, :position, :max_current, :residual_current_device_type_id ])
+      params.expect(residual_current_device: [ :electrical_panel_id, :row_number, :position, :output_max_current, :residual_current_device_type_id ])
     end
 end
