@@ -46,7 +46,12 @@
       <% if unresolved_violations.any? %>
         <ul style="margin: 0; padding-left: 1.5rem; font-size: 12px;">
           <% unresolved_violations.limit(3).each do |violation| %>
-            <li><%= violation.message %> (<%= violation.context["resource_name"] %>)</li>
+            <li>
+              <%= violation.message %> (<%= violation.context["resource_name"] %>)
+              <% if violation.context["actual_count"] %>
+                - <%= violation.context["actual_count"] %>/<%= violation.context["max_count"] %>
+              <% end %>
+            </li>
           <% end %>
           <% if unresolved_violations.count > 3 %>
             <li>... and <%= unresolved_violations.count - 3 %> more</li>

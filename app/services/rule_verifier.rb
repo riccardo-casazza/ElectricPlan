@@ -83,6 +83,20 @@ class RuleVerifier
     validation = @rule_data["validation"]
     return true unless validation
 
+    # Handle max_count validation
+    if validation["max_count"]
+      path = validation["path"]
+      max_count = validation["max_count"]
+
+      actual_value = get_nested_value(resource, path)
+      return true unless actual_value
+
+      # Get count if it's a collection
+      count = actual_value.respond_to?(:count) ? actual_value.count : 0
+      return count <= max_count
+    end
+
+    # Handle must_equal validation
     path = validation["path"]
     expected_value = validation["must_equal"]
 
@@ -114,15 +128,27 @@ class RuleVerifier
   def create_violation(resource)
     error_message = @rule_data.dig("error_message") || "Rule validation failed"
 
+    context = {
+      resource_name: resource.try(:name) || resource.id,
+      checked_at: Time.current
+    }
+
+    # Add count information if this is a max_count violation
+    if @rule_data.dig("validation", "max_count")
+      path = @rule_data.dig("validation", "path")
+      actual_value = get_nested_value(resource, path)
+      if actual_value&.respond_to?(:count)
+        context[:actual_count] = actual_value.count
+        context[:max_count] = @rule_data.dig("validation", "max_count")
+      end
+    end
+
     violation = @rule.rule_violations.create!(
       resource_type: resource.class.name,
       resource_id: resource.id,
       severity: "error",
       message: error_message,
-      context: {
-        resource_name: resource.try(:name) || resource.id,
-        checked_at: Time.current
-      }
+      context: context
     )
 
     @violations << violation

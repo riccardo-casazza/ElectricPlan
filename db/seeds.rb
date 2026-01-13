@@ -62,4 +62,55 @@ Rule.find_or_create_by!(
   rule.rule = cooktop_rule_yaml
 end
 
+washing_machine_rule_yaml = <<~YAML
+  # Check if item type is washing machine and verify RCD type
+  condition:
+    item_type: washing machine
+  validation:
+    # Navigate from Item -> Breaker -> RCD -> RCD Type
+    path: item.breaker.residual_current_device.residual_current_device_type.name
+    must_equal: "A"
+  error_message: "Washing machine must be connected to an RCD type A"
+YAML
+
+Rule.find_or_create_by!(
+  description: "Washing machine should be connected to RCD type A",
+  applies_to: "Item"
+) do |rule|
+  rule.rule = washing_machine_rule_yaml
+end
+
+ev_charger_rule_yaml = <<~YAML
+  # Check if item type is ev charger and verify RCD type
+  condition:
+    item_type: ev charger
+  validation:
+    # Navigate from Item -> Breaker -> RCD -> RCD Type
+    path: item.breaker.residual_current_device.residual_current_device_type.name
+    must_equal: "A"
+  error_message: "EV charger must be connected to an RCD type A"
+YAML
+
+Rule.find_or_create_by!(
+  description: "EV charger should be connected to RCD type A",
+  applies_to: "Item"
+) do |rule|
+  rule.rule = ev_charger_rule_yaml
+end
+
+max_breakers_rule_yaml = <<~YAML
+  # Check that each RCD has a maximum of 8 breakers
+  validation:
+    path: residual_current_device.breakers
+    max_count: 8
+  error_message: "RCD has too many breakers (maximum 8 allowed)"
+YAML
+
+Rule.find_or_create_by!(
+  description: "Maximum 8 breakers per RCD",
+  applies_to: "ResidualCurrentDevice"
+) do |rule|
+  rule.rule = max_breakers_rule_yaml
+end
+
 puts "Seeded #{Rule.count} compliance rules"
