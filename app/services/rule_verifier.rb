@@ -95,6 +95,11 @@ class RuleVerifier
       return validate_rcd_load_calculation(resource, validation)
     end
 
+    # Handle breaker_light_rules validation
+    if validation["type"] == "breaker_light_rules"
+      return validate_breaker_light_rules(resource, validation)
+    end
+
     # Handle max_count validation
     if validation["max_count"]
       path = validation["path"]
@@ -147,6 +152,40 @@ class RuleVerifier
 
     # RCD max current must be >= total required
     rcd.output_max_current >= total_required
+  end
+
+  def validate_breaker_light_rules(breaker, validation)
+    rule_type = validation["rule"]
+    items = breaker.items.includes(:item_type)
+
+    # Skip breakers with no items
+    return true if items.empty?
+
+    has_light = items.any? { |item| item.item_type.name.downcase == "light" }
+
+    # Skip if breaker has no light items (rule doesn't apply)
+    return true unless has_light
+
+    case rule_type
+    when "only_lights"
+      # All items must be lights
+      items.all? { |item| item.item_type.name.downcase == "light" }
+    when "min_count"
+      # Must have at least specified number of items
+      min = validation["min_value"] || 2
+      items.count >= min
+    when "max_current"
+      # Breaker max current must not exceed specified value
+      max = validation["max_value"] || 16
+      breaker.output_max_current <= max
+    when "max_light_count"
+      # Must have at most specified number of light items
+      max = validation["max_value"] || 8
+      light_count = items.count { |item| item.item_type.name.downcase == "light" }
+      light_count <= max
+    else
+      true
+    end
   end
 
   def get_nested_value(object, path)
@@ -215,6 +254,28 @@ class RuleVerifier
       context[:full_load_sum] = full_load_sum
       context[:partial_load_sum] = partial_load_sum
       context[:total_required] = total_required.round(1)
+    end
+
+    # Add breaker light rule details if this is a breaker_light_rules violation
+    if @rule_data.dig("validation", "type") == "breaker_light_rules"
+      items = resource.items.includes(:item_type)
+      rule_type = @rule_data.dig("validation", "rule")
+
+      case rule_type
+      when "only_lights"
+        non_light_items = items.reject { |item| item.item_type.name.downcase == "light" }
+        context[:non_light_items] = non_light_items.map { |item| item.item_type.name }.join(", ")
+      when "min_count"
+        context[:item_count] = items.count
+        context[:min_required] = @rule_data.dig("validation", "min_value") || 2
+      when "max_current"
+        context[:breaker_current] = resource.output_max_current
+        context[:max_allowed] = @rule_data.dig("validation", "max_value") || 16
+      when "max_light_count"
+        light_count = items.count { |item| item.item_type.name.downcase == "light" }
+        context[:light_count] = light_count
+        context[:max_lights] = @rule_data.dig("validation", "max_value") || 8
+      end
     end
 
     violation = @rule.rule_violations.create!(

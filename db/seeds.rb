@@ -135,4 +135,67 @@ Rule.find_or_create_by!(
   rule.rule = rcd_load_calculation_rule_yaml
 end
 
+light_only_rule_yaml = <<~YAML
+  # Breakers with light items must only have light items
+  validation:
+    type: breaker_light_rules
+    rule: only_lights
+  error_message: "Breaker with lights must contain only light items"
+YAML
+
+Rule.find_or_create_by!(
+  description: "Light breakers must contain only lights",
+  applies_to: "Breaker"
+) do |rule|
+  rule.rule = light_only_rule_yaml
+end
+
+light_min_count_rule_yaml = <<~YAML
+  # Breakers with light items must have at least 2 items
+  validation:
+    type: breaker_light_rules
+    rule: min_count
+    min_value: 2
+  error_message: "Light breaker must have at least 2 items"
+YAML
+
+Rule.find_or_create_by!(
+  description: "Light breakers must have minimum 2 items",
+  applies_to: "Breaker"
+) do |rule|
+  rule.rule = light_min_count_rule_yaml
+end
+
+light_max_current_rule_yaml = <<~YAML
+  # Breakers with light items must be maximum 16A
+  validation:
+    type: breaker_light_rules
+    rule: max_current
+    max_value: 16
+  error_message: "Light breaker must be maximum 16A"
+YAML
+
+Rule.find_or_create_by!(
+  description: "Light breakers must be maximum 16A",
+  applies_to: "Breaker"
+) do |rule|
+  rule.rule = light_max_current_rule_yaml
+end
+
+light_max_count_rule_yaml = <<~YAML
+  # Breakers with light items must have maximum 8 light items
+  validation:
+    type: breaker_light_rules
+    rule: max_light_count
+    max_value: 8
+  error_message: "Light breaker must have maximum 8 light items"
+YAML
+
+Rule.find_or_create_by!(
+  description: "Light breakers must have maximum 8 lights",
+  applies_to: "Breaker"
+) do |rule|
+  rule.rule = light_max_count_rule_yaml
+end
+
 puts "Seeded #{Rule.count} compliance rules"
