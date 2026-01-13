@@ -50,6 +50,9 @@
               <%= violation.message %> (<%= violation.context["resource_name"] %>)
               <% if violation.context["actual_count"] %>
                 - <%= violation.context["actual_count"] %>/<%= violation.context["max_count"] %>
+              <% elsif violation.context["total_required"] %>
+                - RCD: <%= violation.context["rcd_max_current"] %>A, Required: <%= violation.context["total_required"] %>A
+                (Full: <%= violation.context["full_load_sum"] %>A + Partial: <%= violation.context["partial_load_sum"] %>A×0.5)
               <% end %>
             </li>
           <% end %>

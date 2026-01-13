@@ -90,6 +90,11 @@ class RuleVerifier
     validation = @rule_data["validation"]
     return true unless validation
 
+    # Handle load_calculation validation for RCD current capacity
+    if validation["type"] == "load_calculation"
+      return validate_rcd_load_calculation(resource, validation)
+    end
+
     # Handle max_count validation
     if validation["max_count"]
       path = validation["path"]
@@ -110,6 +115,38 @@ class RuleVerifier
     actual_value = get_nested_value(resource, path)
 
     actual_value.to_s.downcase == expected_value.to_s.downcase
+  end
+
+  def validate_rcd_load_calculation(rcd, validation)
+    full_load_types = validation["full_load_types"] || []
+
+    # Get all breakers for this RCD with their items
+    breakers = rcd.breakers.includes(items: :item_type)
+
+    full_load_sum = 0
+    partial_load_sum = 0
+
+    breakers.each do |breaker|
+      # Skip breakers with no items
+      next if breaker.items.empty?
+
+      # Check if any item on this breaker is a full load type
+      has_full_load_item = breaker.items.any? do |item|
+        full_load_types.include?(item.item_type.name.downcase)
+      end
+
+      if has_full_load_item
+        full_load_sum += breaker.output_max_current
+      else
+        partial_load_sum += breaker.output_max_current
+      end
+    end
+
+    # Apply 0.5 multiplier to partial load
+    total_required = full_load_sum + (partial_load_sum * 0.5)
+
+    # RCD max current must be >= total required
+    rcd.output_max_current >= total_required
   end
 
   def get_nested_value(object, path)
@@ -148,6 +185,36 @@ class RuleVerifier
         context[:actual_count] = actual_value.count
         context[:max_count] = @rule_data.dig("validation", "max_count")
       end
+    end
+
+    # Add load calculation details if this is a load_calculation violation
+    if @rule_data.dig("validation", "type") == "load_calculation"
+      full_load_types = @rule_data.dig("validation", "full_load_types") || []
+      breakers = resource.breakers.includes(items: :item_type)
+
+      full_load_sum = 0
+      partial_load_sum = 0
+
+      breakers.each do |breaker|
+        next if breaker.items.empty?
+
+        has_full_load_item = breaker.items.any? do |item|
+          full_load_types.include?(item.item_type.name.downcase)
+        end
+
+        if has_full_load_item
+          full_load_sum += breaker.output_max_current
+        else
+          partial_load_sum += breaker.output_max_current
+        end
+      end
+
+      total_required = full_load_sum + (partial_load_sum * 0.5)
+
+      context[:rcd_max_current] = resource.output_max_current
+      context[:full_load_sum] = full_load_sum
+      context[:partial_load_sum] = partial_load_sum
+      context[:total_required] = total_required.round(1)
     end
 
     violation = @rule.rule_violations.create!(

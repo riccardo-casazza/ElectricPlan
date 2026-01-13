@@ -22,7 +22,8 @@
   "roller shutters",
   "dryer",
   "freezer",
-  "microwave"
+  "microwave",
+  "A/C"
 ].each do |item_type_name|
   ItemType.find_or_create_by!(name: item_type_name)
 end
@@ -111,6 +112,27 @@ Rule.find_or_create_by!(
   applies_to: "ResidualCurrentDevice"
 ) do |rule|
   rule.rule = max_breakers_rule_yaml
+end
+
+rcd_load_calculation_rule_yaml = <<~YAML
+  # Check RCD max current capacity against connected load
+  # Full load items (100%): ev charger, convector, water heater, A/C
+  # Partial load items (50%): all other types
+  validation:
+    type: load_calculation
+    full_load_types:
+      - ev charger
+      - convector
+      - water heater
+      - a/c
+  error_message: "RCD max current insufficient for connected load"
+YAML
+
+Rule.find_or_create_by!(
+  description: "RCD current capacity must handle connected load",
+  applies_to: "ResidualCurrentDevice"
+) do |rule|
+  rule.rule = rcd_load_calculation_rule_yaml
 end
 
 puts "Seeded #{Rule.count} compliance rules"
