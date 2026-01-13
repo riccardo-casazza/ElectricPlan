@@ -74,6 +74,6 @@ class BreakersController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def breaker_params
-      params.expect(breaker: [ :residual_current_device_id, :position, :max_current, :description, :name ])
+      params.expect(breaker: [ :residual_current_device_id, :position, :output_max_current, :description, :name ])
     end
 end
