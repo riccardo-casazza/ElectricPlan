@@ -35,7 +35,7 @@
       <select name="item[breaker_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 200px;" data-controller="select">
         <option value="">Select a breaker</option>
         <% Breaker.all.each do |breaker| %>
-          <option value="<%= breaker.id %>" <%= 'selected' if item.breaker_id == breaker.id %>><%= breaker.name %> (RCD: <%= breaker.residual_current_device.name %>)</option>
+          <option value="<%= breaker.id %>" <%= 'selected' if item.breaker_id == breaker.id %>><%= breaker.name %></option>
         <% end %>
       </select>
     </td>

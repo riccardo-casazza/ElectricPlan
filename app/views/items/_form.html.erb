@@ -29,7 +29,7 @@
 
   <div class="form-field">
     <%= form.label :breaker_id, "Breaker" %>
-    <%= form.collection_select :breaker_id, Breaker.all, :id, ->(breaker) { "#{breaker.name} (RCD: #{breaker.residual_current_device.name})" },
+    <%= form.collection_select :breaker_id, Breaker.all, :id, :name,
         { prompt: "Select a breaker" }, { class: "form-input", data: { controller: "select" } } %>
   </div>
 
