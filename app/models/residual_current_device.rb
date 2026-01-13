@@ -22,6 +22,9 @@ class ResidualCurrentDevice < ApplicationRecord
   def row_number_must_be_sequential
     return unless row_number && electrical_panel_id
 
+    # Skip validation if updating and row_number hasn't changed
+    return if persisted? && row_number == row_number_was
+
     # Get all row numbers for this panel, excluding the current record if updating
     existing_rows = ResidualCurrentDevice.where(electrical_panel_id: electrical_panel_id)
                                          .where.not(id: id)
@@ -41,6 +44,9 @@ class ResidualCurrentDevice < ApplicationRecord
 
   def position_must_be_sequential
     return unless position && electrical_panel_id && row_number
+
+    # Skip validation if updating and position hasn't changed
+    return if persisted? && position == position_was && row_number == row_number_was
 
     # Get all positions for this panel and row, excluding the current record if updating
     existing_positions = ResidualCurrentDevice.where(electrical_panel_id: electrical_panel_id, row_number: row_number)

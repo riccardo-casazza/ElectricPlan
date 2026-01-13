@@ -19,6 +19,9 @@ class Breaker < ApplicationRecord
   def position_must_be_sequential
     return unless position && residual_current_device_id
 
+    # Skip validation if updating and position hasn't changed
+    return if persisted? && position == position_was
+
     # Get all positions for this RCD, excluding the current record if updating
     existing_positions = Breaker.where(residual_current_device_id: residual_current_device_id)
                                  .where.not(id: id)
