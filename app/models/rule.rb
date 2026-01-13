@@ -32,4 +32,25 @@ class Rule < ApplicationRecord
     else "?"
     end
   end
+
+  def last_verification_time
+    rule_violations.maximum(:created_at)
+  end
+
+  def last_verification_summary
+    return "Not verified" unless last_verification_time
+
+    time_ago = Time.current - last_verification_time
+    time_text = if time_ago < 60
+      "#{time_ago.to_i}s ago"
+    elsif time_ago < 3600
+      "#{(time_ago / 60).to_i}m ago"
+    elsif time_ago < 86400
+      "#{(time_ago / 3600).to_i}h ago"
+    else
+      "#{(time_ago / 86400).to_i}d ago"
+    end
+
+    "Verified #{time_text}"
+  end
 end

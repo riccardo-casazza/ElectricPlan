@@ -39,6 +39,7 @@
     <td style="text-align: center;">
       <span style="font-size: 24px; color: <%= rule.status_color %>;">●</span>
       <div style="font-size: 10px; color: #666;"><%= rule.verification_status.to_s.titleize %></div>
+      <div style="font-size: 9px; color: #999; margin-top: 2px;"><%= rule.last_verification_summary %></div>
     </td>
     <td>
       <% unresolved_violations = rule.rule_violations.where(resolved: false) %>
