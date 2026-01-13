@@ -30,14 +30,14 @@ end
 puts "Seeded #{ItemType.count} item types"
 
 # Seed ResidualCurrentDeviceTypes
-["A", "AC", "F"].each do |type_name|
+[ "A", "AC", "F" ].each do |type_name|
   ResidualCurrentDeviceType.find_or_create_by!(name: type_name)
 end
 
 puts "Seeded #{ResidualCurrentDeviceType.count} residual current device types"
 
 # Seed Cables
-["1.5mm2", "2.5mm2", "6mm2", "10mm2", "16mm2"].each do |section_name|
+[ "1.5mm2", "2.5mm2", "6mm2", "10mm2", "16mm2" ].each do |section_name|
   Cable.find_or_create_by!(section: section_name)
 end
 

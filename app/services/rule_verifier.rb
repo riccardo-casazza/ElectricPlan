@@ -45,7 +45,7 @@ class RuleVerifier
   private
 
   def parse_rule_yaml
-    @rule_data = YAML.safe_load(@rule.rule, permitted_classes: [Symbol])
+    @rule_data = YAML.safe_load(@rule.rule, permitted_classes: [ Symbol ])
     true
   rescue => e
     false

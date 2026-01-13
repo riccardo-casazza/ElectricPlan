@@ -12,6 +12,6 @@ class CreateRuleViolations < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :rule_violations, [:resource_type, :resource_id]
+    add_index :rule_violations, [ :resource_type, :resource_id ]
   end
 end
