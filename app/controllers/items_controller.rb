@@ -1,5 +1,5 @@
 class ItemsController < ApplicationController
-  before_action :set_item, only: %i[ show edit update destroy ]
+  before_action :set_item, only: %i[ show edit update destroy duplicate ]
 
   # GET /items or /items.json
   def index
@@ -63,6 +63,21 @@ class ItemsController < ApplicationController
     respond_to do |format|
       format.html { redirect_to items_path, notice: "Item was successfully destroyed.", status: :see_other }
       format.json { head :no_content }
+    end
+  end
+
+  # POST /items/1/duplicate
+  def duplicate
+    @new_item = @item.dup
+
+    respond_to do |format|
+      if @new_item.save
+        format.html { redirect_to items_path, notice: "Item was successfully duplicated." }
+        format.json { render :show, status: :created, location: @new_item }
+      else
+        format.html { redirect_to items_path, alert: "Failed to duplicate item." }
+        format.json { render json: @new_item.errors, status: :unprocessable_entity }
+      end
     end
   end
 

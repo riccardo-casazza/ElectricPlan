@@ -61,6 +61,7 @@
     <td><%= item.input_cable&.section || "N/A" %></td>
     <td class="actions">
       <%= link_to "Edit", edit_item_path(item), class: "button-small button-secondary" %>
+      <%= button_to "Duplicate", duplicate_item_path(item), method: :post, class: "button-small button-primary" %>
       <%= button_to "Delete", item, method: :delete, class: "button-small button-danger",
           form: { data: { turbo_confirm: "Are you sure?" } } %>
     </td>

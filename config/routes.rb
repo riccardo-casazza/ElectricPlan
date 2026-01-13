@@ -5,7 +5,11 @@ Rails.application.routes.draw do
     end
   end
   resources :cables
-  resources :items
+  resources :items do
+    member do
+      post :duplicate
+    end
+  end
   resources :breakers
   resources :residual_current_devices
   resources :residual_current_device_types
