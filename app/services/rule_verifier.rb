@@ -74,7 +74,14 @@ class RuleVerifier
 
     # Example: condition: { item_type: "cooktop" }
     condition.all? do |key, expected_value|
+      # For associations, try both the direct value and .name
       actual_value = get_nested_value(resource, key)
+
+      # If the value is an ActiveRecord object, try to get its name
+      if actual_value.is_a?(ApplicationRecord)
+        actual_value = actual_value.try(:name) || actual_value.to_s
+      end
+
       actual_value.to_s.downcase == expected_value.to_s.downcase
     end
   end
