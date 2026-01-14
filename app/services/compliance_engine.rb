@@ -64,14 +64,16 @@ class ComplianceEngine
 
     case resource.class.name
     when "ElectricalPanel"
-      # Check all RCDs under this panel
+      # Check all RCDs under this panel (including their downstream violations)
       resource.residual_current_devices.each do |rcd|
-        violations.concat(rcd.all_violations)
+        violations.concat(rcd.compliance_violations)
+        violations.concat(rcd.downstream_violations)
       end
     when "ResidualCurrentDevice"
-      # Check all breakers under this RCD
+      # Check all breakers under this RCD (including their downstream violations)
       resource.breakers.each do |breaker|
         violations.concat(breaker.compliance_violations)
+        violations.concat(breaker.downstream_violations)
       end
     when "Breaker"
       # Check all items on this breaker
