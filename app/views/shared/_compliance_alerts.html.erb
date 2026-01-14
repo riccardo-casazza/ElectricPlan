@@ -1,0 +1,29 @@
+<% violations = local_assigns[:violations] || [] %>
+<% return if violations.empty? %>
+
+<div class="compliance-alerts">
+  <% violations.each do |violation| %>
+    <div class="compliance-alert <%= violation.css_class %>">
+      <div class="compliance-alert-header">
+        <strong>
+          <%= violation.severity.to_s.upcase %>:
+        </strong>
+        <%= violation.message %>
+      </div>
+
+      <% if violation.help.present? %>
+        <div class="compliance-alert-help">
+          <em>Suggestion:</em> <%= violation.help %>
+        </div>
+      <% end %>
+
+      <% if local_assigns[:show_resource_link] && violation.resource.id != 0 %>
+        <div class="compliance-alert-resource">
+          <small>
+            Affected: <%= link_to violation.resource_identifier, violation.resource %>
+          </small>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

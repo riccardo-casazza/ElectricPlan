@@ -1,4 +1,6 @@
 class Item < ApplicationRecord
+  include ComplianceAware
+
   belongs_to :breaker
   belongs_to :room
   belongs_to :item_type

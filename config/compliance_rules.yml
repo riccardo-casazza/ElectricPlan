@@ -1,0 +1,133 @@
+# Electrical Installation Compliance Rules
+# This file centralizes all compliance validation rules
+
+# ========================================
+# BREAKER RULES
+# ========================================
+breaker_rules:
+  light_only:
+    applies_to: Breaker
+    description: "Light breakers must contain only lights"
+    condition:
+      type: has_light_items
+    validation:
+      type: exclusive_type
+      required_type: light
+    severity: error
+    message: "This breaker contains non-light items"
+    help: "Remove {non_light_items} or move lights to another breaker"
+
+  light_max_count:
+    applies_to: Breaker
+    description: "Light breakers can have maximum 8 lights"
+    condition:
+      type: has_light_items
+    validation:
+      type: max_count
+      attribute: light_items
+      max_value: 8
+    severity: error
+    message: "Light breaker has {actual_count} lights (maximum {max_value} allowed)"
+    help: "Remove excess lights or split across multiple breakers"
+
+  light_max_current:
+    applies_to: Breaker
+    description: "Light breakers must be maximum 16A"
+    condition:
+      type: has_light_items
+    validation:
+      type: max_attribute
+      attribute: output_max_current
+      max_value: 16
+    severity: error
+    message: "Light breaker is {actual_value}A (maximum {max_value}A allowed)"
+    help: "Use a lower amperage breaker or move some lights to another circuit"
+
+# ========================================
+# ITEM RULES
+# ========================================
+item_rules:
+  cooktop_rcd_type:
+    applies_to: Item
+    description: "Cooktop must be connected to RCD type A"
+    condition:
+      type: item_type_equals
+      value: cooktop
+    validation:
+      type: association_attribute
+      path: breaker.residual_current_device.residual_current_device_type.name
+      must_equal: "A"
+    severity: error
+    message: "Cooktop must be connected to RCD type A (currently: {actual_value})"
+    help: "Connect this cooktop to a breaker under an RCD type A"
+
+  washing_machine_rcd_type:
+    applies_to: Item
+    description: "Washing machine must be connected to RCD type A"
+    condition:
+      type: item_type_equals
+      value: washing machine
+    validation:
+      type: association_attribute
+      path: breaker.residual_current_device.residual_current_device_type.name
+      must_equal: "A"
+    severity: error
+    message: "Washing machine must be connected to RCD type A (currently: {actual_value})"
+    help: "Connect this washing machine to a breaker under an RCD type A"
+
+  ev_charger_rcd_type:
+    applies_to: Item
+    description: "EV charger must be connected to RCD type A"
+    condition:
+      type: item_type_equals
+      value: ev charger
+    validation:
+      type: association_attribute
+      path: breaker.residual_current_device.residual_current_device_type.name
+      must_equal: "A"
+    severity: error
+    message: "EV charger must be connected to RCD type A (currently: {actual_value})"
+    help: "Connect this EV charger to a breaker under an RCD type A"
+
+# ========================================
+# RCD RULES
+# ========================================
+rcd_rules:
+  max_breakers:
+    applies_to: ResidualCurrentDevice
+    description: "RCD can have maximum 8 breakers"
+    validation:
+      type: association_count
+      association: breakers
+      max_count: 8
+    severity: error
+    message: "RCD has {actual_count} breakers (maximum {max_count} allowed)"
+    help: "Remove excess breakers or add another RCD"
+
+  load_capacity:
+    applies_to: ResidualCurrentDevice
+    description: "RCD current capacity must handle connected load"
+    validation:
+      type: load_calculation
+      full_load_types:
+        - ev charger
+        - convector
+        - water heater
+        - a/c
+    severity: error
+    message: "RCD max current ({rcd_current}A) insufficient for load ({required_current}A)"
+    help: "Use a higher amperage RCD or redistribute load across multiple RCDs"
+
+# ========================================
+# SYSTEM RULES
+# ========================================
+system_rules:
+  min_light_circuits:
+    applies_to: System
+    description: "Installation must have minimum 2 light breakers"
+    validation:
+      type: min_light_breakers
+      min_value: 2
+    severity: error
+    message: "Installation has only {actual_count} light breaker(s) (minimum {min_value} required)"
+    help: "Create at least one additional breaker with light items"

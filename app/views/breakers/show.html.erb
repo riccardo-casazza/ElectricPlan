@@ -6,6 +6,8 @@
 
 <h1>Breaker Details</h1>
 
+<%= compliance_alerts_for(@breaker, include_upstream: true, include_downstream: true) %>
+
 <%= render @breaker %>
 
 <div style="margin-top: 2rem;">

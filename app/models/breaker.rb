@@ -1,4 +1,6 @@
 class Breaker < ApplicationRecord
+  include ComplianceAware
+
   belongs_to :residual_current_device
   has_many :items, dependent: :destroy
 

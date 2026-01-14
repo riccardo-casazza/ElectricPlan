@@ -1,4 +1,6 @@
 class ResidualCurrentDevice < ApplicationRecord
+  include ComplianceAware
+
   belongs_to :electrical_panel
   belongs_to :residual_current_device_type
   has_many :breakers, dependent: :destroy

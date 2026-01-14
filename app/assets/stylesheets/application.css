@@ -197,3 +197,84 @@ h1 {
 .error-messages li {
   color: #c0392b;
 }
+
+/* Compliance Alert Styles */
+.compliance-alerts {
+  margin: 1.5rem 0;
+}
+
+.compliance-alert {
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border-left: 4px solid;
+}
+
+.compliance-alert-header {
+  margin-bottom: 0.5rem;
+}
+
+.compliance-alert-help {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.compliance-alert-resource {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.violation-error {
+  background-color: #fee;
+  border-left-color: #e74c3c;
+  color: #c0392b;
+}
+
+.violation-error strong {
+  color: #c0392b;
+}
+
+.violation-warning {
+  background-color: #fef8e7;
+  border-left-color: #f39c12;
+  color: #7d6608;
+}
+
+.violation-warning strong {
+  color: #f39c12;
+}
+
+.violation-info {
+  background-color: #eaf2f8;
+  border-left-color: #3498db;
+  color: #1f618d;
+}
+
+.violation-info strong {
+  color: #3498db;
+}
+
+/* Compliance Badge Styles */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.badge-success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.badge-error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.badge-warning {
+  background-color: #fff3cd;
+  color: #856404;
+}

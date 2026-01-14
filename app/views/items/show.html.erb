@@ -6,6 +6,8 @@
 
 <h1>Item Details</h1>
 
+<%= compliance_alerts_for(@item, include_upstream: true) %>
+
 <%= render @item %>
 
 <div style="margin-top: 2rem;">
