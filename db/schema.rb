@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_14_085958) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_14_173731) do
   create_table "breakers", force: :cascade do |t|
     t.integer "residual_current_device_id", null: false
     t.integer "position"
@@ -89,6 +89,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_085958) do
     t.integer "floor_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "is_kitchen", default: false
     t.index ["floor_id"], name: "index_rooms_on_floor_id"
   end
 

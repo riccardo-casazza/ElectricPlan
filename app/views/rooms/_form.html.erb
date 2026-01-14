@@ -20,6 +20,11 @@
     <%= form.collection_select :floor_id, Floor.all, :id, :name, { prompt: "Select a floor" }, { class: "form-input", data: { controller: "select" } } %>
   </div>
 
+  <div class="form-field">
+    <%= form.label :is_kitchen, "Is a Kitchen" %>
+    <%= form.check_box :is_kitchen %>
+  </div>
+
   <div class="form-actions">
     <%= form.submit class: "button-primary" %>
     <%= link_to "Cancel", rooms_path, class: "button-secondary" %>
