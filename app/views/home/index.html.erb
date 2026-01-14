@@ -7,13 +7,8 @@
   <h2>Management Sections</h2>
 
   <div style="margin: 1rem 0;">
-    <h3><%= link_to "Floors", floors_path %></h3>
-    <p>Add, view, edit, and delete floors in your building.</p>
-  </div>
-
-  <div style="margin: 1rem 0;">
-    <h3><%= link_to "Rooms", rooms_path %></h3>
-    <p>Manage rooms and assign them to floors.</p>
+    <h3><%= link_to "Configuration", configuration_index_path %></h3>
+    <p>Manage building structure (floors, rooms) and system types (item types, RCD types, cables).</p>
   </div>
 
   <div style="margin: 1rem 0;">
@@ -34,25 +29,5 @@
   <div style="margin: 1rem 0;">
     <h3><%= link_to "Items", items_path %></h3>
     <p>Manage electrical items connected to breakers in rooms.</p>
-  </div>
-
-  <div style="margin: 1rem 0;">
-    <h3><%= link_to "Cables", cables_path %></h3>
-    <p>Manage cable sections available for installation.</p>
-  </div>
-
-  <div style="margin: 1rem 0;">
-    <h3><%= link_to "Item Types", item_types_path %></h3>
-    <p>Manage electrical item types (cooktop, light, socket, etc.).</p>
-  </div>
-
-  <div style="margin: 1rem 0;">
-    <h3><%= link_to "RCD Types", residual_current_device_types_path %></h3>
-    <p>Manage RCD types (A, AC, F).</p>
-  </div>
-
-  <div style="margin: 1rem 0;">
-    <h3><%= link_to "Compliance Rules", rules_path %></h3>
-    <p>Manage NF C 15-100 compliance rules with YAML definitions.</p>
   </div>
 </div>

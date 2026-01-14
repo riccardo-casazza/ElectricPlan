@@ -60,9 +60,13 @@
     <td><%= item.breaker.name %></td>
     <td><%= item.input_cable&.section || "N/A" %></td>
     <td class="actions">
+      <% has_any_errors = item.all_violations.any?(&:error?) %>
+      <% compliance_class = has_any_errors ? "button-small button-danger" : "button-small button-success" %>
+      <% compliance_icon = has_any_errors ? "⚠" : "✓" %>
+      <%= link_to compliance_icon, item, class: compliance_class, title: has_any_errors ? "Has compliance issues" : "Compliant" %>
       <%= link_to "Edit", edit_item_path(item), class: "button-small button-secondary" %>
       <%= button_to "Duplicate", duplicate_item_path(item), method: :post, class: "button-small button-primary" %>
-      <%= button_to "Delete", item, method: :delete, class: "button-small button-danger",
+      <%= button_to "Delete", item, method: :delete, class: "button-small button-secondary",
           form: { data: { turbo_confirm: "Are you sure?" } } %>
     </td>
   </tr>

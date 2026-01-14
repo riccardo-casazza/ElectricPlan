@@ -1,4 +1,6 @@
 class ElectricalPanel < ApplicationRecord
+  include ComplianceAware
+
   belongs_to :room
   belongs_to :input_cable, class_name: "Cable", optional: true
   has_many :residual_current_devices, dependent: :destroy

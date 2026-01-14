@@ -132,6 +132,14 @@ h1 {
   background-color: #c0392b;
 }
 
+.button-small.button-success {
+  background-color: #27ae60;
+}
+
+.button-small.button-success:hover {
+  background-color: #229954;
+}
+
 /* Form Styles */
 .crud-form {
   max-width: 600px;

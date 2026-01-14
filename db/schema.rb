@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_12_185112) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_14_085958) do
   create_table "breakers", force: :cascade do |t|
     t.integer "residual_current_device_id", null: false
     t.integer "position"
@@ -34,6 +34,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_185112) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "input_cable_id"
+    t.integer "input_max_current"
     t.index ["input_cable_id"], name: "index_electrical_panels_on_input_cable_id"
     t.index ["room_id"], name: "index_electrical_panels_on_room_id"
   end
@@ -91,28 +92,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_185112) do
     t.index ["floor_id"], name: "index_rooms_on_floor_id"
   end
 
-  create_table "rule_violations", force: :cascade do |t|
-    t.integer "rule_id", null: false
-    t.string "resource_type"
-    t.integer "resource_id"
-    t.string "severity"
-    t.text "message"
-    t.json "context"
-    t.boolean "resolved", default: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["resource_type", "resource_id"], name: "index_rule_violations_on_resource_type_and_resource_id"
-    t.index ["rule_id"], name: "index_rule_violations_on_rule_id"
-  end
-
-  create_table "rules", force: :cascade do |t|
-    t.text "description"
-    t.text "rule"
-    t.string "applies_to"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   add_foreign_key "breakers", "residual_current_devices"
   add_foreign_key "electrical_panels", "cables", column: "input_cable_id"
   add_foreign_key "items", "breakers"
@@ -122,5 +101,4 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_185112) do
   add_foreign_key "residual_current_devices", "electrical_panels"
   add_foreign_key "residual_current_devices", "residual_current_device_types"
   add_foreign_key "rooms", "floors"
-  add_foreign_key "rule_violations", "rules"
 end

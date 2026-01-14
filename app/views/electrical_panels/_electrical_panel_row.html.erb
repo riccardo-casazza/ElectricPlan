@@ -54,8 +54,12 @@
     <td><%= electrical_panel.room.floor.name %></td>
     <td><%= electrical_panel.input_cable&.section || "N/A" %></td>
     <td class="actions">
+      <% has_any_errors = electrical_panel.all_violations.any?(&:error?) %>
+      <% compliance_class = has_any_errors ? "button-small button-danger" : "button-small button-success" %>
+      <% compliance_icon = has_any_errors ? "⚠" : "✓" %>
+      <%= link_to compliance_icon, electrical_panel, class: compliance_class, title: has_any_errors ? "Has compliance issues" : "Compliant" %>
       <%= link_to "Edit", edit_electrical_panel_path(electrical_panel), class: "button-small button-secondary" %>
-      <%= button_to "Delete", electrical_panel, method: :delete, class: "button-small button-danger",
+      <%= button_to "Delete", electrical_panel, method: :delete, class: "button-small button-secondary",
           form: { data: { turbo_confirm: "Are you sure you want to delete this electrical panel?" } } %>
     </td>
   </tr>

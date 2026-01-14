@@ -1,9 +1,5 @@
 Rails.application.routes.draw do
-  resources :rules do
-    member do
-      post :verify
-    end
-  end
+  get "configuration/index"
   resources :cables
   resources :items do
     member do

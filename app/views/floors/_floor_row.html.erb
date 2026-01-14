@@ -27,7 +27,7 @@
     <td><%= floor.rooms.count %></td>
     <td class="actions">
       <%= link_to "Edit", edit_floor_path(floor), class: "button-small button-secondary" %>
-      <%= button_to "Delete", floor, method: :delete, class: "button-small button-danger",
+      <%= button_to "Delete", floor, method: :delete, class: "button-small button-secondary",
           form: { data: { turbo_confirm: "Are you sure you want to delete this floor and all its rooms?" } } %>
     </td>
   </tr>

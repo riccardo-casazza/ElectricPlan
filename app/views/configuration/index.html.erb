@@ -1,0 +1,41 @@
+<% content_for :title, "Configuration" %>
+
+<div style="margin-bottom: 1rem;">
+  <%= link_to "← Back to Home", root_path %>
+</div>
+
+<h1>Configuration</h1>
+<p>Manage building structure and system types.</p>
+
+<div style="margin-top: 2rem;">
+  <h2>Building Configuration</h2>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Floors", floors_path %></h3>
+    <p>Add, view, edit, and delete floors in your building.</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Rooms", rooms_path %></h3>
+    <p>Manage rooms and assign them to floors.</p>
+  </div>
+</div>
+
+<div style="margin-top: 2rem;">
+  <h2>Types</h2>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Item Types", item_types_path %></h3>
+    <p>Manage electrical item types (cooktop, light, socket, etc.).</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "RCD Types", residual_current_device_types_path %></h3>
+    <p>Manage RCD types (A, AC, F).</p>
+  </div>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Cables", cables_path %></h3>
+    <p>Manage cable sections available for installation.</p>
+  </div>
+</div>

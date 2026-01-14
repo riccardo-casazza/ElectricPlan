@@ -48,8 +48,12 @@
     <td><%= residual_current_device.output_max_current %></td>
     <td><%= residual_current_device.residual_current_device_type.name %></td>
     <td class="actions">
+      <% has_any_errors = residual_current_device.all_violations.any?(&:error?) %>
+      <% compliance_class = has_any_errors ? "button-small button-danger" : "button-small button-success" %>
+      <% compliance_icon = has_any_errors ? "⚠" : "✓" %>
+      <%= link_to compliance_icon, residual_current_device, class: compliance_class, title: has_any_errors ? "Has compliance issues" : "Compliant" %>
       <%= link_to "Edit", edit_residual_current_device_path(residual_current_device), class: "button-small button-secondary" %>
-      <%= button_to "Delete", residual_current_device, method: :delete, class: "button-small button-danger",
+      <%= button_to "Delete", residual_current_device, method: :delete, class: "button-small button-secondary",
           form: { data: { turbo_confirm: "Are you sure you want to delete this RCD?" } } %>
     </td>
   </tr>

@@ -6,9 +6,11 @@
 
 <h1>Electrical Panel Details</h1>
 
+<%= compliance_alerts_for(@electrical_panel, include_downstream: true) %>
+
 <%= render @electrical_panel %>
 
 <div style="margin-top: 2rem;">
   <%= link_to "Edit", edit_electrical_panel_path(@electrical_panel), class: "button-secondary" %>
-  <%= button_to "Delete", @electrical_panel, method: :delete, class: "button-danger", form: { data: { turbo_confirm: "Are you sure you want to delete this electrical panel?" } } %>
+  <%= button_to "Delete", @electrical_panel, method: :delete, class: "button-secondary", form: { data: { turbo_confirm: "Are you sure you want to delete this electrical panel?" } } %>
 </div>
