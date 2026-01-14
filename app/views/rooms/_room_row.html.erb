@@ -3,7 +3,7 @@
   <% form_id = dom_id(room, :form) %>
   <% if room.errors.any? %>
     <tr>
-      <td colspan="3" style="background-color: #fee; padding: 1rem;">
+      <td colspan="4" style="background-color: #fee; padding: 1rem;">
         <strong><%= pluralize(room.errors.count, "error") %> prohibited this room from being saved:</strong>
         <ul style="margin: 0.5rem 0 0 1.5rem;">
           <% room.errors.each do |error| %>
@@ -23,6 +23,10 @@
         <% end %>
       </select>
     </td>
+    <td style="text-align: center;">
+      <input type="checkbox" name="room[is_kitchen]" value="1" form="<%= form_id %>" <%= 'checked' if room.is_kitchen %>>
+      <input type="hidden" name="room[is_kitchen]" value="0" form="<%= form_id %>">
+    </td>
     <td class="actions">
       <input type="submit" value="Save" form="<%= form_id %>" class="button-small button-primary">
       <%= link_to "Cancel", rooms_path, class: "button-small button-secondary" %>
@@ -32,6 +36,7 @@
   <tr id="<%= dom_id(room) %>">
     <td><%= room.name %></td>
     <td><%= room.floor.name %></td>
+    <td style="text-align: center;"><%= room.is_kitchen ? "✓" : "" %></td>
     <td class="actions">
       <%= link_to "Edit", edit_room_path(room), class: "button-small button-secondary" %>
       <%= button_to "Delete", room, method: :delete, class: "button-small button-secondary",
