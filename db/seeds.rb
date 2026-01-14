@@ -150,20 +150,20 @@ Rule.find_or_create_by!(
   rule.rule = light_only_rule_yaml
 end
 
-light_min_count_rule_yaml = <<~YAML
-  # Breakers with light items must have at least 2 items
+min_light_breakers_rule_yaml = <<~YAML
+  # Installation must have at least 2 breakers with light items
   validation:
-    type: breaker_light_rules
-    rule: min_count
+    type: system_level
+    rule: min_light_breakers
     min_value: 2
-  error_message: "Light breaker must have at least 2 items"
+  error_message: "Installation must have at least 2 breakers with lights"
 YAML
 
 Rule.find_or_create_by!(
-  description: "Light breakers must have minimum 2 items",
+  description: "Installation must have minimum 2 light breakers",
   applies_to: "Breaker"
 ) do |rule|
-  rule.rule = light_min_count_rule_yaml
+  rule.rule = min_light_breakers_rule_yaml
 end
 
 light_max_current_rule_yaml = <<~YAML

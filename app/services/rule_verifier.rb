@@ -10,6 +10,11 @@ class RuleVerifier
     # Clear previous violations for this rule
     @rule.rule_violations.destroy_all
 
+    # Special handling for system-level rules (check once, not per resource)
+    if @rule_data.dig("validation", "type") == "system_level"
+      return verify_system_level_rule
+    end
+
     # Get all resources of the type this rule applies to
     resources = get_applicable_resources
 
@@ -40,6 +45,60 @@ class RuleVerifier
     }
   rescue => e
     { success: false, error: e.message }
+  end
+
+  def verify_system_level_rule
+    validation = @rule_data["validation"]
+    rule_type = validation["rule"]
+
+    case rule_type
+    when "min_light_breakers"
+      min_required = validation["min_value"] || 2
+      light_breakers_count = Breaker.joins(items: :item_type)
+                                     .where(item_types: { name: "light" })
+                                     .distinct
+                                     .count
+
+      if light_breakers_count < min_required
+        error_message = @rule_data.dig("error_message") || "System rule validation failed"
+        @rule.rule_violations.create!(
+          resource_type: "System",
+          resource_id: 0,
+          severity: "error",
+          message: error_message,
+          context: {
+            light_breakers_count: light_breakers_count,
+            min_required: min_required,
+            checked_at: Time.current
+          }
+        )
+        return {
+          success: true,
+          total_checked: 1,
+          violations_count: 1,
+          violations: []
+        }
+      else
+        @rule.rule_violations.create!(
+          resource_type: "System",
+          resource_id: 0,
+          severity: "info",
+          message: "System has enough light breakers",
+          resolved: true,
+          context: {
+            light_breakers_count: light_breakers_count,
+            min_required: min_required,
+            checked_at: Time.current
+          }
+        )
+        return {
+          success: true,
+          total_checked: 1,
+          violations_count: 0,
+          violations: []
+        }
+      end
+    end
   end
 
   private
@@ -90,6 +149,11 @@ class RuleVerifier
     validation = @rule_data["validation"]
     return true unless validation
 
+    # Handle system_level validation (checks across all resources)
+    if validation["type"] == "system_level"
+      return validate_system_level(resource, validation)
+    end
+
     # Handle load_calculation validation for RCD current capacity
     if validation["type"] == "load_calculation"
       return validate_rcd_load_calculation(resource, validation)
@@ -120,6 +184,23 @@ class RuleVerifier
     actual_value = get_nested_value(resource, path)
 
     actual_value.to_s.downcase == expected_value.to_s.downcase
+  end
+
+  def validate_system_level(resource, validation)
+    rule_type = validation["rule"]
+
+    case rule_type
+    when "min_light_breakers"
+      min_required = validation["min_value"] || 2
+      # Count all breakers that have at least one light item
+      light_breakers_count = Breaker.joins(items: :item_type)
+                                     .where(item_types: { name: "light" })
+                                     .distinct
+                                     .count
+      light_breakers_count >= min_required
+    else
+      true
+    end
   end
 
   def validate_rcd_load_calculation(rcd, validation)

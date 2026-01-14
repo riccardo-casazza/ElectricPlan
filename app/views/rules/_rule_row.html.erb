@@ -47,8 +47,13 @@
         <ul style="margin: 0; padding-left: 1.5rem; font-size: 12px;">
           <% unresolved_violations.limit(3).each do |violation| %>
             <li>
-              <%= violation.message %> (<%= violation.context["resource_name"] %>)
-              <% if violation.context["actual_count"] %>
+              <%= violation.message %>
+              <% if violation.context["resource_name"] %>
+                (<%= violation.context["resource_name"] %>)
+              <% end %>
+              <% if violation.context["light_breakers_count"] %>
+                - Found <%= violation.context["light_breakers_count"] %> (min: <%= violation.context["min_required"] %>)
+              <% elsif violation.context["actual_count"] %>
                 - <%= violation.context["actual_count"] %>/<%= violation.context["max_count"] %>
               <% elsif violation.context["total_required"] %>
                 - RCD: <%= violation.context["rcd_max_current"] %>A, Required: <%= violation.context["total_required"] %>A
