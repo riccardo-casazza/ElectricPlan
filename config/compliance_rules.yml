@@ -43,6 +43,83 @@ breaker_rules:
     message: "Light breaker is {actual_value}A (maximum {max_value}A allowed)"
     help: "Use a lower amperage breaker or move some lights to another circuit"
 
+  socket_only:
+    applies_to: Breaker
+    description: "Socket breakers must contain only sockets"
+    condition:
+      type: has_socket_items
+    validation:
+      type: exclusive_type
+      required_type: socket
+    severity: error
+    message: "This breaker contains non-socket items"
+    help: "Remove {non_socket_items} or move sockets to another breaker"
+
+  socket_16a_max_count:
+    applies_to: Breaker
+    description: "16A socket breakers can have maximum 8 sockets"
+    condition:
+      type: socket_breaker_16a
+    validation:
+      type: max_count
+      attribute: socket_items
+      max_value: 8
+    severity: error
+    message: "16A socket breaker has {actual_count} sockets (maximum {max_value} allowed)"
+    help: "Remove excess sockets or use a 20A breaker"
+
+  socket_16a_cable:
+    applies_to: Breaker
+    description: "16A socket breakers must use 1.5mm2 cable"
+    condition:
+      type: socket_breaker_16a
+    validation:
+      type: association_attribute
+      path: breaker.output_cable.section
+      must_equal: "1.5mm2"
+    severity: error
+    message: "16A socket breaker must use 1.5mm2 cable (currently: {actual_value})"
+    help: "Change the output cable to 1.5mm2"
+
+  socket_20a_max_count:
+    applies_to: Breaker
+    description: "20A socket breakers can have maximum 12 sockets"
+    condition:
+      type: socket_breaker_20a
+    validation:
+      type: max_count
+      attribute: socket_items
+      max_value: 12
+    severity: error
+    message: "20A socket breaker has {actual_count} sockets (maximum {max_value} allowed)"
+    help: "Remove excess sockets or split across multiple breakers"
+
+  socket_20a_cable:
+    applies_to: Breaker
+    description: "20A socket breakers must use 2.5mm2 cable"
+    condition:
+      type: socket_breaker_20a
+    validation:
+      type: association_attribute
+      path: breaker.output_cable.section
+      must_equal: "2.5mm2"
+    severity: error
+    message: "20A socket breaker must use 2.5mm2 cable (currently: {actual_value})"
+    help: "Change the output cable to 2.5mm2"
+
+  socket_invalid_current:
+    applies_to: Breaker
+    description: "Socket breakers must be either 16A or 20A"
+    condition:
+      type: has_socket_items
+    validation:
+      type: attribute_in_list
+      attribute: output_max_current
+      allowed_values: [16, 20]
+    severity: error
+    message: "Socket breaker is {actual_value}A (must be 16A or 20A)"
+    help: "Change breaker amperage to either 16A or 20A"
+
 # ========================================
 # ITEM RULES
 # ========================================

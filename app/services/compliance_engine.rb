@@ -123,6 +123,23 @@ class ComplianceEngine
       return false unless resource.respond_to?(:items)
       resource.items.joins(:item_type).where(item_types: { name: "light" }).exists?
 
+    when "has_socket_items"
+      # Check if resource has any socket items
+      return false unless resource.respond_to?(:items)
+      resource.items.joins(:item_type).where(item_types: { name: "socket" }).exists?
+
+    when "socket_breaker_16a"
+      # Check if this is a 16A breaker with sockets
+      return false unless resource.respond_to?(:items) && resource.respond_to?(:output_max_current)
+      has_sockets = resource.items.joins(:item_type).where(item_types: { name: "socket" }).exists?
+      has_sockets && resource.output_max_current == 16
+
+    when "socket_breaker_20a"
+      # Check if this is a 20A breaker with sockets
+      return false unless resource.respond_to?(:items) && resource.respond_to?(:output_max_current)
+      has_sockets = resource.items.joins(:item_type).where(item_types: { name: "socket" }).exists?
+      has_sockets && resource.output_max_current == 20
+
     when "item_type_equals"
       # Check if item's type matches the specified value
       return false unless resource.respond_to?(:item_type)
@@ -151,6 +168,8 @@ class ComplianceEngine
       validate_association_count(resource, validation)
     when "load_calculation"
       validate_load_calculation(resource, validation)
+    when "attribute_in_list"
+      validate_attribute_in_list(resource, validation)
     else
       true
     end
@@ -179,19 +198,20 @@ class ComplianceEngine
     return true unless resource.respond_to?(:items)
 
     # All items must be of the required type
-    resource.items.joins(:item_type).all? do |item|
-      item.item_type.name.downcase == required_type.downcase
-    end
+    non_matching_items = resource.items.joins(:item_type).where.not(item_types: { name: required_type })
+    non_matching_items.empty?
   end
 
   def validate_max_count(resource, validation)
     attribute = validation["attribute"]
     max_value = validation["max_value"]
 
-    # Get the collection (e.g., light_items)
+    # Get the collection (e.g., light_items, socket_items)
     items = case attribute
     when "light_items"
       resource.items.joins(:item_type).where(item_types: { name: "light" })
+    when "socket_items"
+      resource.items.joins(:item_type).where(item_types: { name: "socket" })
     else
       return true
     end
@@ -254,6 +274,16 @@ class ComplianceEngine
 
     total_required = full_load_sum + (partial_load_sum * 0.5)
     resource.output_max_current >= total_required
+  end
+
+  def validate_attribute_in_list(resource, validation)
+    attribute = validation["attribute"]
+    allowed_values = validation["allowed_values"]
+
+    actual_value = resource.send(attribute)
+    allowed_values.include?(actual_value)
+  rescue
+    true
   end
 
   def get_nested_value(object, path)
@@ -322,12 +352,23 @@ class ComplianceEngine
 
     case validation_type
     when "exclusive_type"
-      # Add non-light items to context
+      # Add non-matching items to context
       if resource.respond_to?(:items)
-        non_light_items = resource.items.joins(:item_type)
-                                  .where.not(item_types: { name: "light" })
+        required_type = validation["required_type"]
+        non_matching_items = resource.items.joins(:item_type)
+                                  .where.not(item_types: { name: required_type })
                                   .map { |item| item.item_type.name }
-        context[:non_light_items] = non_light_items.join(", ")
+
+        # Use appropriate context key based on required type
+        context_key = "non_#{required_type}_items".to_sym
+        context[context_key] = non_matching_items.join(", ")
+
+        # Keep backwards compatibility for light breakers
+        if required_type == "light"
+          context[:non_light_items] = non_matching_items.join(", ")
+        elsif required_type == "socket"
+          context[:non_socket_items] = non_matching_items.join(", ")
+        end
       end
 
     when "max_count"
@@ -337,6 +378,8 @@ class ComplianceEngine
       actual_count = case attribute
       when "light_items"
         resource.items.joins(:item_type).where(item_types: { name: "light" }).count
+      when "socket_items"
+        resource.items.joins(:item_type).where(item_types: { name: "socket" }).count
       else
         0
       end
@@ -351,6 +394,14 @@ class ComplianceEngine
 
       context[:actual_value] = actual_value
       context[:max_value] = max_value
+
+    when "attribute_in_list"
+      attribute = validation["attribute"]
+      allowed_values = validation["allowed_values"]
+      actual_value = resource.send(attribute) rescue nil
+
+      context[:actual_value] = actual_value
+      context[:allowed_values] = allowed_values.join(", ")
 
     when "association_attribute"
       path = validation["path"]
