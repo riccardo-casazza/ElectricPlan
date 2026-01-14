@@ -24,8 +24,8 @@
       </select>
     </td>
     <td style="text-align: center;">
-      <input type="checkbox" name="room[is_kitchen]" value="1" form="<%= form_id %>" <%= 'checked' if room.is_kitchen %>>
       <input type="hidden" name="room[is_kitchen]" value="0" form="<%= form_id %>">
+      <input type="checkbox" name="room[is_kitchen]" value="1" form="<%= form_id %>" id="room_is_kitchen_<%= room.id || 'new' %>" <%= 'checked' if room.is_kitchen %>>
     </td>
     <td class="actions">
       <input type="submit" value="Save" form="<%= form_id %>" class="button-small button-primary">
