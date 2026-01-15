@@ -198,6 +198,133 @@ breaker_rules:
     message: "Shutter breaker must use minimum 1.5 mm² cable (currently: {actual_value} mm²)"
     help: "Change the output cable to 1.5 mm² or larger for shutters"
 
+  convector_exclusive:
+    applies_to: Breaker
+    description: "Convector breakers must be dedicated (convectors only)"
+    condition:
+      type: has_convector_items
+    validation:
+      type: breaker_exclusive_for_type
+      item_types: ["convector"]
+    severity: error
+    message: "Convector breakers must only contain convectors (found: {non_allowed_items})"
+    help: "Move non-convector items to another breaker"
+
+  convector_max_power:
+    applies_to: Breaker
+    description: "Convector breakers can have maximum 4500W total power"
+    condition:
+      type: has_convector_items
+    validation:
+      type: max_total_power
+      item_type: "convector"
+      max_power: 4500
+    severity: error
+    message: "Convector breaker has {total_power}W (maximum {max_power}W allowed)"
+    help: "Split convectors across multiple breakers or reduce total power"
+
+  convector_max_current:
+    applies_to: Breaker
+    description: "Convector breakers must be maximum 20A"
+    condition:
+      type: has_convector_items
+    validation:
+      type: max_attribute
+      attribute: output_max_current
+      max_value: 20
+    severity: error
+    message: "Convector breaker must be maximum 20A (currently: {actual_value}A)"
+    help: "Change breaker amperage to 20A or lower"
+
+  convector_min_cable:
+    applies_to: Breaker
+    description: "Convector breakers must use minimum 2.5 mm² cable"
+    condition:
+      type: has_convector_items
+    validation:
+      type: min_cable_section
+      path: breaker.output_cable.section
+      min_section: 2.5
+    severity: error
+    message: "Convector breaker must use minimum 2.5 mm² cable (currently: {actual_value} mm²)"
+    help: "Change the output cable to 2.5 mm² or larger"
+
+  appliance_exclusive:
+    applies_to: Breaker
+    description: "High-power appliance breakers must be dedicated (one appliance per breaker)"
+    condition:
+      type: has_high_power_appliance_items
+    validation:
+      type: breaker_exclusive_for_type
+      item_types: ["dishwasher", "washing machine", "dryer", "oven"]
+    severity: error
+    message: "Appliance breakers must only contain one of: dishwasher, washing machine, dryer, or oven (found other items: {non_allowed_items})"
+    help: "Move other items to separate breakers"
+
+  appliance_max_current:
+    applies_to: Breaker
+    description: "High-power appliance breakers must be maximum 20A"
+    condition:
+      type: has_high_power_appliance_items
+    validation:
+      type: max_attribute
+      attribute: output_max_current
+      max_value: 20
+    severity: error
+    message: "Appliance breaker must be maximum 20A (currently: {actual_value}A)"
+    help: "Change breaker amperage to 20A or lower"
+
+  appliance_min_cable:
+    applies_to: Breaker
+    description: "High-power appliance breakers must use minimum 2.5 mm² cable"
+    condition:
+      type: has_high_power_appliance_items
+    validation:
+      type: min_cable_section
+      path: breaker.output_cable.section
+      min_section: 2.5
+    severity: error
+    message: "Appliance breaker must use minimum 2.5 mm² cable (currently: {actual_value} mm²)"
+    help: "Change the output cable to 2.5 mm² or larger"
+
+  cooktop_exclusive:
+    applies_to: Breaker
+    description: "Cooktop breakers must be dedicated (cooktop only)"
+    condition:
+      type: has_cooktop_items
+    validation:
+      type: breaker_exclusive_for_type
+      item_types: ["cooktop"]
+    severity: error
+    message: "Cooktop breakers must only contain cooktops (found: {non_allowed_items})"
+    help: "Move non-cooktop items to another breaker"
+
+  cooktop_max_current:
+    applies_to: Breaker
+    description: "Cooktop breakers must be maximum 32A"
+    condition:
+      type: has_cooktop_items
+    validation:
+      type: max_attribute
+      attribute: output_max_current
+      max_value: 32
+    severity: error
+    message: "Cooktop breaker must be maximum 32A (currently: {actual_value}A)"
+    help: "Change breaker amperage to 32A or lower"
+
+  cooktop_min_cable:
+    applies_to: Breaker
+    description: "Cooktop breakers must use minimum 6 mm² cable"
+    condition:
+      type: has_cooktop_items
+    validation:
+      type: min_cable_section
+      path: breaker.output_cable.section
+      min_section: 6
+    severity: error
+    message: "Cooktop breaker must use minimum 6 mm² cable (currently: {actual_value} mm²)"
+    help: "Change the output cable to 6 mm² or larger"
+
 # ========================================
 # ITEM RULES
 # ========================================
@@ -296,3 +423,14 @@ system_rules:
     severity: error
     message: "Installation has {actual_count} shutter breaker(s) (minimum {min_value} required)"
     help: "Create at least one breaker dedicated to roller shutters"
+
+  min_appliance_circuits:
+    applies_to: System
+    description: "Installation must have at least 3 dedicated appliance circuits"
+    validation:
+      type: min_appliance_circuits
+      min_value: 3
+      appliance_types: ["dishwasher", "washing machine", "dryer", "oven"]
+    severity: error
+    message: "Installation has {actual_count} appliance circuit(s) (minimum {min_value} required for dishwasher, washing machine, dryer, or oven)"
+    help: "Create at least 3 dedicated breakers for dishwashers, washing machines, dryers, or ovens"

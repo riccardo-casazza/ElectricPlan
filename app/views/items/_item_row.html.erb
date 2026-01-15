@@ -3,7 +3,7 @@
   <% form_id = dom_id(item, :form) %>
   <% if item.errors.any? %>
     <tr>
-      <td colspan="6" style="background-color: #fee; padding: 1rem;">
+      <td colspan="7" style="background-color: #fee; padding: 1rem;">
         <strong><%= pluralize(item.errors.count, "error") %> prohibited this item from being saved:</strong>
         <ul style="margin: 0.5rem 0 0 1.5rem;">
           <% item.errors.each do |error| %>
@@ -47,6 +47,9 @@
         <% end %>
       </select>
     </td>
+    <td>
+      <input type="number" step="1" name="item[power_watts]" value="<%= item.power_watts %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 100px;" placeholder="Watts">
+    </td>
     <td class="actions">
       <input type="submit" value="Save" form="<%= form_id %>" class="button-small button-primary">
       <%= link_to "Cancel", items_path, class: "button-small button-secondary" %>
@@ -58,7 +61,8 @@
     <td><%= item.item_type.name %></td>
     <td><%= item.room.floor.name %> - <%= item.room.name %></td>
     <td><%= item.breaker.name %></td>
-    <td><%= item.input_cable&.section || "N/A" %></td>
+    <td><%= item.input_cable ? "#{item.input_cable.section} mm²" : "N/A" %></td>
+    <td><%= item.power_watts ? "#{item.power_watts}W" : "-" %></td>
     <td class="actions">
       <% has_any_errors = item.all_violations.any?(&:error?) %>
       <% compliance_class = has_any_errors ? "button-small button-danger" : "button-small button-success" %>

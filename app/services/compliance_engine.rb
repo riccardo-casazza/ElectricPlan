@@ -159,6 +159,22 @@ class ComplianceEngine
       return false unless resource.respond_to?(:items)
       resource.items.joins(:item_type).where(item_types: { name: "roller shutters" }).exists?
 
+    when "has_convector_items"
+      # Check if resource has any convector items
+      return false unless resource.respond_to?(:items)
+      resource.items.joins(:item_type).where(item_types: { name: "convector" }).exists?
+
+    when "has_high_power_appliance_items"
+      # Check if resource has dishwasher, washing machine, dryer, or oven items
+      return false unless resource.respond_to?(:items)
+      appliance_types = ["dishwasher", "washing machine", "dryer", "oven"]
+      resource.items.joins(:item_type).where("LOWER(item_types.name) IN (?)", appliance_types).exists?
+
+    when "has_cooktop_items"
+      # Check if resource has any cooktop items
+      return false unless resource.respond_to?(:items)
+      resource.items.joins(:item_type).where(item_types: { name: "cooktop" }).exists?
+
     else
       true
     end
@@ -186,6 +202,10 @@ class ComplianceEngine
       validate_attribute_in_list(resource, validation)
     when "min_cable_section"
       validate_min_cable_section(resource, validation)
+    when "max_total_power"
+      validate_max_total_power(resource, validation)
+    when "breaker_exclusive_for_type"
+      validate_breaker_exclusive_for_type(resource, validation)
     else
       true
     end
@@ -212,6 +232,16 @@ class ComplianceEngine
                                        .distinct
                                        .count
       shutter_breakers_count >= min_value
+
+    when "min_appliance_circuits"
+      min_value = validation["min_value"] || 3
+      appliance_types = validation["appliance_types"] || ["dishwasher", "washing machine", "dryer", "oven"]
+
+      appliance_breakers_count = Breaker.joins(items: :item_type)
+                                         .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
+                                         .distinct
+                                         .count
+      appliance_breakers_count >= min_value
 
     else
       true
@@ -328,6 +358,38 @@ class ComplianceEngine
     actual_float >= min_value
   end
 
+  def validate_max_total_power(resource, validation)
+    item_type_name = validation["item_type"]
+    max_power = validation["max_power"]
+
+    return true unless resource.respond_to?(:items)
+
+    # Calculate total power for items of the specified type
+    total_power = resource.items.joins(:item_type)
+                          .where("LOWER(item_types.name) = ?", item_type_name.downcase)
+                          .sum(:power_watts)
+
+    total_power <= max_power
+  end
+
+  def validate_breaker_exclusive_for_type(resource, validation)
+    item_type_names = validation["item_types"]
+
+    return true unless resource.respond_to?(:items)
+
+    # Check if breaker has items of the specified types
+    has_specified_types = resource.items.joins(:item_type)
+                                  .where("LOWER(item_types.name) IN (?)", item_type_names.map(&:downcase))
+                                  .exists?
+
+    return true unless has_specified_types
+
+    # If it has these types, ensure ONLY these types are present
+    all_item_types = resource.items.joins(:item_type).pluck("LOWER(item_types.name)").uniq
+
+    all_item_types.all? { |type| item_type_names.map(&:downcase).include?(type) }
+  end
+
   def get_nested_value(object, path)
     return nil unless object
 
@@ -382,6 +444,19 @@ class ComplianceEngine
       context = {
         actual_count: actual_count,
         min_value: min_value
+      }
+    elsif validation_type == "min_appliance_circuits"
+      min_value = rule_config["validation"]["min_value"] || 3
+      appliance_types = rule_config["validation"]["appliance_types"] || ["dishwasher", "washing machine", "dryer", "oven"]
+
+      actual_count = Breaker.joins(items: :item_type)
+                            .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
+                            .distinct
+                            .count
+      context = {
+        actual_count: actual_count,
+        min_value: min_value,
+        appliance_types: appliance_types.join(", ")
       }
     end
 
@@ -508,6 +583,27 @@ class ComplianceEngine
 
       context[:actual_value] = actual_value
       context[:min_section] = min_section
+
+    when "max_total_power"
+      item_type_name = validation["item_type"]
+      max_power = validation["max_power"]
+
+      total_power = resource.items.joins(:item_type)
+                            .where("LOWER(item_types.name) = ?", item_type_name.downcase)
+                            .sum(:power_watts)
+
+      context[:total_power] = total_power
+      context[:max_power] = max_power
+      context[:item_type] = item_type_name
+
+    when "breaker_exclusive_for_type"
+      item_type_names = validation["item_types"]
+
+      all_item_types = resource.items.joins(:item_type).pluck("item_types.name").uniq
+      non_allowed_types = all_item_types.reject { |type| item_type_names.map(&:downcase).include?(type.downcase) }
+
+      context[:required_types] = item_type_names.join(", ")
+      context[:non_allowed_items] = non_allowed_types.join(", ")
     end
 
     context

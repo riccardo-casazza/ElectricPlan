@@ -21,7 +21,14 @@
 
   <p>
     <strong>Input Cable:</strong>
-    <%= item.input_cable&.section || "N/A" %>
+    <%= item.input_cable ? "#{item.input_cable.section} mm²" : "N/A" %>
   </p>
+
+  <% if item.power_watts.present? %>
+    <p>
+      <strong>Power:</strong>
+      <%= item.power_watts %>W
+    </p>
+  <% end %>
 
 </div>

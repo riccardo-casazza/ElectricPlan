@@ -39,6 +39,12 @@
         { prompt: "Select a cable section", include_blank: true }, { class: "form-input", data: { controller: "select" } } %>
   </div>
 
+  <div class="form-field" id="power_watts_field" style="<%= 'display: none;' unless item.requires_power? %>">
+    <%= form.label :power_watts, "Power (W)" %>
+    <%= form.number_field :power_watts, class: "form-input", placeholder: "e.g., 2000", step: 1 %>
+    <small style="color: #666;">Required for convectors, water heaters, and A/C units</small>
+  </div>
+
   <div class="form-actions">
     <%= form.submit class: "button-primary" %>
     <%= link_to "Cancel", items_path, class: "button-secondary" %>

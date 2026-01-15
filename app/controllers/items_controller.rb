@@ -89,6 +89,6 @@ class ItemsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def item_params
-      params.expect(item: [ :breaker_id, :room_id, :name, :item_type_id, :input_cable_id ])
+      params.expect(item: [ :breaker_id, :room_id, :name, :item_type_id, :input_cable_id, :power_watts ])
     end
 end
