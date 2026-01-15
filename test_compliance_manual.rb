@@ -48,7 +48,7 @@ ActiveRecord::Base.transaction do
   dwelling = Dwelling.create!(name: "Test House")
   panel = ElectricalPanel.create!(name: "Test Panel", dwelling: dwelling, room: room, input_cable: cable_6)
   rcd_type = ResidualCurrentDeviceType.first || ResidualCurrentDeviceType.create!(name: "Type A")
-  rcd = ResidualCurrentDevice.create!(electrical_panel: panel, output_max_current: 40, residual_current_device_type: rcd_type)
+  rcd = ResidualCurrentDevice.create!(electrical_panel: panel, output_max_current: 40, residual_current_device_type: rcd_type, row_number: 1, position: 1)
 
   light_type = ItemType.find_or_create_by!(name: "light")
   socket_type = ItemType.find_or_create_by!(name: "socket")
@@ -59,7 +59,7 @@ ActiveRecord::Base.transaction do
   # TEST 1: Light breaker with non-light items (should fail)
   total_tests += 1
   passed_tests += 1 if test("light_only rule - should detect non-light items") do
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 16, output_cable: cable_1_5)
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 16, output_cable: cable_1_5, position: 1)
     Item.create!(breaker: breaker, room: room, name: "Light 1", item_type: light_type)
     Item.create!(breaker: breaker, room: room, name: "Socket 1", item_type: socket_type)
 
@@ -70,7 +70,7 @@ ActiveRecord::Base.transaction do
   # TEST 2: Light breaker with only lights (should pass)
   total_tests += 1
   passed_tests += 1 if test("light_only rule - should pass with only lights") do
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 16, output_cable: cable_1_5)
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 16, output_cable: cable_1_5, position: 2)
     Item.create!(breaker: breaker, room: room, name: "Light 1", item_type: light_type)
     Item.create!(breaker: breaker, room: room, name: "Light 2", item_type: light_type)
 
@@ -81,7 +81,7 @@ ActiveRecord::Base.transaction do
   # TEST 3: Light breaker exceeding 8 lights (should fail)
   total_tests += 1
   passed_tests += 1 if test("light_max_count rule - should detect >8 lights") do
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 16, output_cable: cable_1_5)
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 16, output_cable: cable_1_5, position: 3)
     9.times { |i| Item.create!(breaker: breaker, room: room, name: "Light #{i+1}", item_type: light_type) }
 
     violations = engine.check_resource(breaker)
@@ -91,7 +91,7 @@ ActiveRecord::Base.transaction do
   # TEST 4: Light breaker exceeding 16A (should fail)
   total_tests += 1
   passed_tests += 1 if test("light_max_current rule - should detect >16A") do
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_1_5)
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_1_5, position: 4)
     Item.create!(breaker: breaker, room: room, name: "Light 1", item_type: light_type)
 
     violations = engine.check_resource(breaker)
@@ -101,7 +101,7 @@ ActiveRecord::Base.transaction do
   # TEST 5: Convector breaker with insufficient cable (should fail)
   total_tests += 1
   passed_tests += 1 if test("convector_min_cable rule - should detect insufficient cable") do
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_1_5)
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_1_5, position: 5)
     Item.create!(breaker: breaker, room: room, name: "Convector 1", item_type: convector_type, power_watts: 2000)
 
     violations = engine.check_resource(breaker)
@@ -111,7 +111,7 @@ ActiveRecord::Base.transaction do
   # TEST 6: Convector breaker exceeding 4500W (should fail)
   total_tests += 1
   passed_tests += 1 if test("convector_max_power rule - should detect >4500W") do
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_2_5)
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_2_5, position: 6)
     Item.create!(breaker: breaker, room: room, name: "Convector 1", item_type: convector_type, power_watts: 2500)
     Item.create!(breaker: breaker, room: room, name: "Convector 2", item_type: convector_type, power_watts: 2500)
 
@@ -122,7 +122,7 @@ ActiveRecord::Base.transaction do
   # TEST 7: Kitchen socket breaker with non-kitchen sockets (should fail)
   total_tests += 1
   passed_tests += 1 if test("kitchen_socket_exclusive rule - should detect non-kitchen items") do
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_2_5)
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_2_5, position: 7)
     Item.create!(breaker: breaker, room: kitchen, name: "Socket 1", item_type: socket_type)
     Item.create!(breaker: breaker, room: room, name: "Socket 2", item_type: socket_type)
 
@@ -134,7 +134,7 @@ ActiveRecord::Base.transaction do
   total_tests += 1
   passed_tests += 1 if test("min_light_circuits rule - should detect insufficient breakers") do
     Breaker.destroy_all
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 16, output_cable: cable_1_5)
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 16, output_cable: cable_1_5, position: 1)
     Item.create!(breaker: breaker, room: room, name: "Light 1", item_type: light_type)
 
     violations = engine.check_system
@@ -155,7 +155,7 @@ ActiveRecord::Base.transaction do
   passed_tests += 1 if test("min_appliance_circuits rule - should detect <3 circuits") do
     Breaker.destroy_all
     dishwasher_type = ItemType.find_or_create_by!(name: "dishwasher")
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_2_5)
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, output_cable: cable_2_5, position: 1)
     Item.create!(breaker: breaker, room: kitchen, name: "Dishwasher", item_type: dishwasher_type)
 
     violations = engine.check_system
