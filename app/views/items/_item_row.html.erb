@@ -43,7 +43,7 @@
       <select name="item[input_cable_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 120px;" data-controller="select">
         <option value="">Select a cable</option>
         <% Cable.all.each do |cable| %>
-          <option value="<%= cable.id %>" <%= 'selected' if item.input_cable_id == cable.id %>><%= cable.section %></option>
+          <option value="<%= cable.id %>" <%= 'selected' if item.input_cable_id == cable.id %>><%= cable.section %> mm²</option>
         <% end %>
       </select>
     </td>

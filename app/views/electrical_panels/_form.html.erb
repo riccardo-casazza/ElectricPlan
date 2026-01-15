@@ -26,7 +26,7 @@
 
   <div class="form-field">
     <%= form.label :input_cable_id, "Input Cable" %>
-    <%= form.collection_select :input_cable_id, Cable.all, :id, :section,
+    <%= form.collection_select :input_cable_id, Cable.all, :id, :section_with_unit,
         { prompt: "Select a cable section", include_blank: true }, { class: "form-input", data: { controller: "select" } } %>
   </div>
 

@@ -43,6 +43,19 @@ breaker_rules:
     message: "Light breaker is {actual_value}A (maximum {max_value}A allowed)"
     help: "Use a lower amperage breaker or move some lights to another circuit"
 
+  light_min_cable:
+    applies_to: Breaker
+    description: "Light breakers must use minimum 1.5 mm² cable"
+    condition:
+      type: has_light_items
+    validation:
+      type: min_cable_section
+      path: breaker.output_cable.section
+      min_section: 1.5
+    severity: error
+    message: "Light breaker must use minimum 1.5 mm² cable (currently: {actual_value} mm²)"
+    help: "Change the output cable to 1.5 mm² or larger"
+
   socket_only:
     applies_to: Breaker
     description: "Socket breakers must contain only sockets"
@@ -70,16 +83,16 @@ breaker_rules:
 
   socket_16a_cable:
     applies_to: Breaker
-    description: "16A socket breakers must use 1.5mm2 cable"
+    description: "16A socket breakers must use minimum 1.5 mm² cable"
     condition:
       type: socket_breaker_16a
     validation:
-      type: association_attribute
+      type: min_cable_section
       path: breaker.output_cable.section
-      must_equal: "1.5mm2"
+      min_section: 1.5
     severity: error
-    message: "16A socket breaker must use 1.5mm2 cable (currently: {actual_value})"
-    help: "Change the output cable to 1.5mm2"
+    message: "16A socket breaker must use minimum 1.5 mm² cable (currently: {actual_value} mm²)"
+    help: "Change the output cable to 1.5 mm² or larger"
 
   socket_20a_max_count:
     applies_to: Breaker
@@ -96,16 +109,16 @@ breaker_rules:
 
   socket_20a_cable:
     applies_to: Breaker
-    description: "20A socket breakers must use 2.5mm2 cable"
+    description: "20A socket breakers must use minimum 2.5 mm² cable"
     condition:
       type: socket_breaker_20a
     validation:
-      type: association_attribute
+      type: min_cable_section
       path: breaker.output_cable.section
-      must_equal: "2.5mm2"
+      min_section: 2.5
     severity: error
-    message: "20A socket breaker must use 2.5mm2 cable (currently: {actual_value})"
-    help: "Change the output cable to 2.5mm2"
+    message: "20A socket breaker must use minimum 2.5 mm² cable (currently: {actual_value} mm²)"
+    help: "Change the output cable to 2.5 mm² or larger"
 
   socket_invalid_current:
     applies_to: Breaker
@@ -120,9 +133,9 @@ breaker_rules:
     message: "Socket breaker is {actual_value}A (must be 16A or 20A)"
     help: "Change breaker amperage to either 16A or 20A"
 
-  kitchen_socket_current:
+  kitchen_socket_max_current:
     applies_to: Breaker
-    description: "Kitchen socket breakers must be 20A"
+    description: "Kitchen socket breakers must be maximum 20A"
     condition:
       type: kitchen_socket_breaker
     validation:
@@ -130,34 +143,21 @@ breaker_rules:
       attribute: output_max_current
       max_value: 20
     severity: error
-    message: "Kitchen socket breaker must be 20A (currently: {actual_value}A)"
-    help: "Change breaker amperage to 20A for kitchen sockets"
-
-  kitchen_socket_min_current:
-    applies_to: Breaker
-    description: "Kitchen socket breakers must be 20A"
-    condition:
-      type: kitchen_socket_breaker
-    validation:
-      type: attribute_in_list
-      attribute: output_max_current
-      allowed_values: [20]
-    severity: error
-    message: "Kitchen socket breaker must be 20A (currently: {actual_value}A)"
-    help: "Change breaker amperage to 20A for kitchen sockets"
+    message: "Kitchen socket breaker must be maximum 20A (currently: {actual_value}A)"
+    help: "Change breaker amperage to 20A or lower for kitchen sockets"
 
   kitchen_socket_cable:
     applies_to: Breaker
-    description: "Kitchen socket breakers must use 2.5mm2 cable"
+    description: "Kitchen socket breakers must use minimum 2.5 mm² cable"
     condition:
       type: kitchen_socket_breaker
     validation:
-      type: association_attribute
+      type: min_cable_section
       path: breaker.output_cable.section
-      must_equal: "2.5mm2"
+      min_section: 2.5
     severity: error
-    message: "Kitchen socket breaker must use 2.5mm2 cable (currently: {actual_value})"
-    help: "Change the output cable to 2.5mm2 for kitchen sockets"
+    message: "Kitchen socket breaker must use minimum 2.5 mm² cable (currently: {actual_value} mm²)"
+    help: "Change the output cable to 2.5 mm² or larger for kitchen sockets"
 
   kitchen_socket_max_count:
     applies_to: Breaker
@@ -172,31 +172,31 @@ breaker_rules:
     message: "Kitchen socket breaker has {actual_count} sockets (maximum {max_value} allowed)"
     help: "Kitchen circuits are limited to 6 sockets maximum"
 
-  shutter_current:
+  shutter_max_current:
     applies_to: Breaker
-    description: "Shutter breakers must be 16A"
+    description: "Shutter breakers must be maximum 16A"
     condition:
       type: has_shutter_items
     validation:
-      type: attribute_in_list
+      type: max_attribute
       attribute: output_max_current
-      allowed_values: [16]
+      max_value: 16
     severity: error
-    message: "Shutter breaker must be 16A (currently: {actual_value}A)"
-    help: "Change breaker amperage to 16A for shutters"
+    message: "Shutter breaker must be maximum 16A (currently: {actual_value}A)"
+    help: "Change breaker amperage to 16A or lower for shutters"
 
   shutter_cable:
     applies_to: Breaker
-    description: "Shutter breakers must use 1.5mm2 cable"
+    description: "Shutter breakers must use minimum 1.5 mm² cable"
     condition:
       type: has_shutter_items
     validation:
-      type: association_attribute
+      type: min_cable_section
       path: breaker.output_cable.section
-      must_equal: "1.5mm2"
+      min_section: 1.5
     severity: error
-    message: "Shutter breaker must use 1.5mm2 cable (currently: {actual_value})"
-    help: "Change the output cable to 1.5mm2 for shutters"
+    message: "Shutter breaker must use minimum 1.5 mm² cable (currently: {actual_value} mm²)"
+    help: "Change the output cable to 1.5 mm² or larger for shutters"
 
 # ========================================
 # ITEM RULES

@@ -11,8 +11,9 @@
   <% end %>
 
   <div class="form-field">
-    <%= form.label :section %>
-    <%= form.text_field :section, class: "form-input" %>
+    <%= form.label :section, "Section (mm²)" %>
+    <%= form.number_field :section, step: 0.1, class: "form-input", placeholder: "e.g., 1.5, 2.5, 6" %>
+    <small style="color: #666;">Enter numeric value only (e.g., 1.5 for 1.5mm²)</small>
   </div>
 
   <div class="form-actions">

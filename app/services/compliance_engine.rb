@@ -184,6 +184,8 @@ class ComplianceEngine
       validate_load_calculation(resource, validation)
     when "attribute_in_list"
       validate_attribute_in_list(resource, validation)
+    when "min_cable_section"
+      validate_min_cable_section(resource, validation)
     else
       true
     end
@@ -307,6 +309,23 @@ class ComplianceEngine
     allowed_values.include?(actual_value)
   rescue
     true
+  end
+
+  def validate_min_cable_section(resource, validation)
+    path = validation["path"]
+    min_section = validation["min_section"]
+
+    actual_value = get_nested_value(resource, path)
+    return true if actual_value.nil?
+
+    # Convert to float for comparison (handles both numeric and string inputs)
+    min_value = min_section.to_f
+    actual_float = actual_value.to_f
+
+    return true if min_value.zero? || actual_float.zero?
+
+    # Actual cable section must be >= minimum required
+    actual_float >= min_value
   end
 
   def get_nested_value(object, path)
@@ -481,6 +500,14 @@ class ComplianceEngine
       context[:required_current] = total_required.round(1)
       context[:full_load_sum] = full_load_sum
       context[:partial_load_sum] = partial_load_sum
+
+    when "min_cable_section"
+      path = validation["path"]
+      min_section = validation["min_section"]
+      actual_value = get_nested_value(resource, path)
+
+      context[:actual_value] = actual_value
+      context[:min_section] = min_section
     end
 
     context

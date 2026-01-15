@@ -14,15 +14,15 @@
     </tr>
   <% end %>
   <tr class="editing" id="<%= dom_id(cable) %>">
-    <td><input type="text" name="cable[section]" value="<%= cable.section %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;"></td>
+    <td><input type="number" step="0.1" name="cable[section]" value="<%= cable.section %>" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;" placeholder="e.g., 1.5"></td>
     <td class="actions">
       <input type="submit" value="Save" form="<%= form_id %>" class="button-small button-primary">
-      <%= link_to "Cancel", cables_path, class: "button-small button-secondary" %>
+      <%= link_to "Cancel", cables_path, class="button-small button-secondary" %>
     </td>
   </tr>
 <% else %>
   <tr id="<%= dom_id(cable) %>">
-    <td><%= cable.section %></td>
+    <td><%= cable.section %> mm²</td>
     <td class="actions">
       <%= link_to "Edit", edit_cable_path(cable), class: "button-small button-secondary" %>
       <%= button_to "Delete", cable, method: :delete, class: "button-small button-secondary",
