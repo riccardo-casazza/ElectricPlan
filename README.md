@@ -1,6 +1,9 @@
 # ElectricPlan
 
-A Ruby on Rails application configured for Docker deployment.
+![CI Status](https://github.com/YOUR_USERNAME/ElectricPlan/workflows/CI/badge.svg)
+![Deploy Status](https://github.com/YOUR_USERNAME/ElectricPlan/workflows/Build%20and%20Push%20Docker%20Image/badge.svg)
+
+A Ruby on Rails application for electrical installation compliance management, configured for Docker deployment.
 
 ## Requirements
 
@@ -65,6 +68,10 @@ docker-compose exec web rails db:migrate
 
 **Run tests**
 ```bash
+# Compliance tests
+docker-compose exec web ruby test_compliance_manual.rb
+
+# Full test suite (when Rails/Minitest issue is fixed)
 docker-compose exec web rails test
 ```
 
@@ -81,22 +88,12 @@ docker-compose exec web rails db:reset
 
 ## Database Configuration
 
-- **Development**: MySQL 8.0 (runs in Docker container)
-- **Test**: SQLite3
-- **Production**: MySQL (connects to existing database via environment variables)
+- **All Environments**: SQLite3 (file-based database)
+- **Development**: `storage/development.sqlite3`
+- **Test**: `storage/test.sqlite3`
+- **Production**: `storage/production.sqlite3`
 
-### Production Environment Variables
-
-Set these environment variables in your production environment:
-
-- `DATABASE_HOST` - MySQL server host
-- `DATABASE_NAME` - Primary database name
-- `DATABASE_USER` - MySQL username
-- `DATABASE_PASSWORD` - MySQL password
-- `DATABASE_CACHE_NAME` - Cache database name (optional)
-- `DATABASE_QUEUE_NAME` - Queue database name (optional)
-- `DATABASE_CABLE_NAME` - Cable database name (optional)
-- `RAILS_MASTER_KEY` - Rails master key for encrypted credentials
+See [CLAUDE.md](CLAUDE.md) for detailed database architecture and deployment instructions.
 
 ## Production Deployment
 
@@ -110,13 +107,12 @@ docker build -t electric_plan .
 
 ```bash
 docker run -d -p 80:80 \
-  -e DATABASE_HOST=your-mysql-host \
-  -e DATABASE_NAME=your-database-name \
-  -e DATABASE_USER=your-username \
-  -e DATABASE_PASSWORD=your-password \
   -e RAILS_MASTER_KEY=your-master-key \
+  -v electric_plan_storage:/rails/storage \
   --name electric_plan electric_plan
 ```
+
+**Note:** Use a volume to persist the SQLite database across container restarts.
 
 ## Ruby Version
 
@@ -126,3 +122,36 @@ docker run -d -p 80:80 \
 ## System Dependencies
 
 All dependencies are managed through Docker containers.
+
+## Testing
+
+ElectricPlan includes comprehensive compliance testing for electrical installation rules.
+
+### Running Tests
+
+```bash
+# Run compliance tests (recommended)
+ruby test_compliance_manual.rb
+
+# Run security scan
+bundle exec brakeman -q -w2
+
+# Run code linter
+bundle exec rubocop
+```
+
+See [TESTING.md](TESTING.md) for detailed testing documentation.
+
+### Test Coverage
+
+- **33 compliance rules** covering breakers, items, RCDs, and system-wide requirements
+- Automated CI pipeline with GitHub Actions
+- Security scanning with Brakeman
+- Code quality checks with RuboCop
+
+## Documentation
+
+- **[CLAUDE.md](CLAUDE.md)** - Project overview and deployment guide
+- **[TESTING.md](TESTING.md)** - Testing guide and CI configuration
+- **[test/services/README.md](test/services/README.md)** - Compliance test documentation
+- **[.github/workflows/README.md](.github/workflows/README.md)** - GitHub Actions workflow documentation

@@ -1,0 +1,127 @@
+#!/usr/bin/env ruby
+# CI readiness check script
+# Verifies that all components are ready for CI/CD
+
+require "yaml"
+
+def check(name)
+  print "Checking #{name}... "
+  result = yield
+  if result
+    puts "✓"
+    true
+  else
+    puts "✗"
+    false
+  end
+rescue => e
+  puts "✗ ERROR: #{e.message}"
+  false
+end
+
+puts "=" * 80
+puts "CI READINESS CHECK"
+puts "=" * 80
+puts
+
+all_passed = true
+
+# Check CI workflow file
+all_passed &= check("CI workflow file exists") do
+  File.exist?(".github/workflows/ci.yml")
+end
+
+# Check deploy workflow file
+all_passed &= check("Deploy workflow file exists") do
+  File.exist?(".github/workflows/deploy.yml")
+end
+
+# Check CI workflow is valid YAML
+all_passed &= check("CI workflow is valid YAML") do
+  YAML.load_file(".github/workflows/ci.yml")
+  true
+end
+
+# Check compliance test script
+all_passed &= check("Compliance test script exists") do
+  File.exist?("test_compliance_manual.rb") && File.executable?("test_compliance_manual.rb")
+end
+
+# Check compliance rules file
+all_passed &= check("Compliance rules file exists") do
+  File.exist?("config/compliance_rules.yml")
+end
+
+# Check compliance rules YAML is valid
+all_passed &= check("Compliance rules YAML is valid") do
+  rules = YAML.load_file("config/compliance_rules.yml")
+  rules.is_a?(Hash) && rules.key?("breaker_rules")
+end
+
+# Check test documentation
+all_passed &= check("Test documentation exists") do
+  File.exist?("TESTING.md") && File.exist?("test/services/README.md")
+end
+
+# Check Dockerfile
+all_passed &= check("Dockerfile exists") do
+  File.exist?("Dockerfile")
+end
+
+# Check database configuration
+all_passed &= check("Database config exists") do
+  File.exist?("config/database.yml")
+end
+
+# Check GitHub Actions has correct structure
+all_passed &= check("CI has test job") do
+  ci_config = YAML.load_file(".github/workflows/ci.yml")
+  ci_config.dig("jobs", "test").is_a?(Hash)
+end
+
+all_passed &= check("CI has lint job") do
+  ci_config = YAML.load_file(".github/workflows/ci.yml")
+  ci_config.dig("jobs", "lint").is_a?(Hash)
+end
+
+all_passed &= check("CI has security job") do
+  ci_config = YAML.load_file(".github/workflows/ci.yml")
+  ci_config.dig("jobs", "security").is_a?(Hash)
+end
+
+# Check README has badges
+all_passed &= check("README has CI badge") do
+  readme = File.read("README.md")
+  readme.include?("workflows/CI/badge.svg")
+end
+
+# Check Gemfile has required gems
+all_passed &= check("Brakeman gem available") do
+  gemfile = File.read("Gemfile")
+  gemfile.include?("brakeman")
+end
+
+all_passed &= check("RuboCop gem available") do
+  gemfile = File.read("Gemfile")
+  gemfile.include?("rubocop")
+end
+
+# Summary
+puts
+puts "=" * 80
+if all_passed
+  puts "✅ ALL CHECKS PASSED - CI is ready!"
+  puts "=" * 80
+  puts
+  puts "Next steps:"
+  puts "1. Commit and push to GitHub"
+  puts "2. GitHub Actions will automatically run CI pipeline"
+  puts "3. Check Actions tab for results: https://github.com/YOUR_USERNAME/ElectricPlan/actions"
+  puts
+  exit 0
+else
+  puts "❌ SOME CHECKS FAILED - Fix issues before pushing"
+  puts "=" * 80
+  puts
+  exit 1
+end

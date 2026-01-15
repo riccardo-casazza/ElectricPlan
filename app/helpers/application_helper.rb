@@ -50,4 +50,17 @@ module ApplicationHelper
       content_tag(:span, "⚠ Warnings", class: "badge badge-warning")
     end
   end
+
+  # Show system-wide compliance violations
+  def system_compliance_alerts
+    engine = ComplianceEngine.new
+    violations = engine.check_system
+
+    return if violations.empty?
+
+    render partial: "shared/compliance_alerts", locals: {
+      violations: violations,
+      show_resource_link: false
+    }
+  end
 end

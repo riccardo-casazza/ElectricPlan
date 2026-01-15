@@ -2,8 +2,14 @@
 
 <h1>ElectricPlan</h1>
 
+<%= system_compliance_alerts %>
+
 <div style="margin-top: 2rem;">
   <h2>Management Sections</h2>
+
+  <div style="margin: 1rem 0;">
+    <h3><%= link_to "Dwellings", dwellings_path %></h3>
+  </div>
 
   <div style="margin: 1rem 0;">
     <h3><%= link_to "Configuration", configuration_index_path %></h3>

@@ -13,33 +13,24 @@ ElectricPlan uses an automated CI/CD pipeline:
 ## Prerequisites
 
 ### Required
-- **MySQL Server**: Production database (4 databases needed)
 - **Production Server**: Linux server with Docker installed
 - **GitHub Repository**: Code pushed to GitHub
 - **Domain Name**: Optional, for SSL/HTTPS
+- **Persistent Storage**: Docker volume for SQLite database files
 
 ### Access Requirements
 - SSH access to production server
-- MySQL credentials with CREATE DATABASE privileges
 - GitHub account with repository access
 
-## Step 1: Prepare MySQL Databases
+## Step 1: Understand SQLite Storage
 
-Connect to your MySQL server and create the required databases:
+ElectricPlan uses **SQLite** for all databases. SQLite stores data in files located in the `storage/` directory:
+- `storage/production.sqlite3` - Main application data
+- `storage/production_cache.sqlite3` - Rails cache
+- `storage/production_queue.sqlite3` - Background jobs (Solid Queue)
+- `storage/production_cable.sqlite3` - WebSocket connections (Solid Cable)
 
-```sql
-CREATE DATABASE electric_plan_production CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE electric_plan_production_cache CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE electric_plan_production_queue CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE electric_plan_production_cable CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- Grant privileges to your application user
-GRANT ALL PRIVILEGES ON electric_plan_production.* TO 'your_user'@'%';
-GRANT ALL PRIVILEGES ON electric_plan_production_cache.* TO 'your_user'@'%';
-GRANT ALL PRIVILEGES ON electric_plan_production_queue.* TO 'your_user'@'%';
-GRANT ALL PRIVILEGES ON electric_plan_production_cable.* TO 'your_user'@'%';
-FLUSH PRIVILEGES;
-```
+**CRITICAL**: You MUST use a Docker volume to persist these database files across container restarts. Without a volume, all data will be lost when the container stops.
 
 ## Step 2: Configure Repository Settings
 
@@ -58,16 +49,12 @@ The deployment workflow is already configured in `.github/workflows/deploy.yml`.
 
 ## Step 3: Prepare Environment Variables
 
-Create a `.env.production` file on your production server with all required secrets:
+Create a `.env.production` file on your production server:
 
 ```bash
 # On your production server, create the environment file:
 cat > ~/.electric_plan.env <<EOF
 RAILS_MASTER_KEY=<value from config/master.key>
-DATABASE_HOST=<your-mysql-host>
-DATABASE_NAME=electric_plan_production
-DATABASE_USER=<your-db-user>
-DATABASE_PASSWORD=<your-db-password>
 SOLID_QUEUE_IN_PUMA=true
 EOF
 
@@ -76,6 +63,8 @@ chmod 600 ~/.electric_plan.env
 ```
 
 **Important**: Never commit this file to git. Keep it secure on your server only.
+
+**Note**: No database credentials needed - SQLite uses file-based storage.
 
 ## Step 4: Initial Deployment
 
@@ -169,7 +158,7 @@ Caddy automatically handles SSL certificates!
    In the console:
    ```ruby
    ActiveRecord::Base.connection.active?  # Should return true
-   Rule.count  # Should return 1 (the seeded cooktop rule)
+   Dwelling.count  # Should show your data
    ```
 
 ## Step 6: Ongoing Deployments
@@ -331,19 +320,25 @@ docker exec -it electric_plan bash
 4. Make package public: Go to package settings → Change visibility → Public
 
 ### Database Connection Failed
-**Problem**: Application cannot connect to MySQL
+**Problem**: Application cannot access SQLite database
 
 **Solution**:
-1. Verify database credentials in `.kamal/secrets`
-2. Check MySQL server is accessible from your application server:
+1. Verify the Docker volume is mounted correctly:
    ```bash
-   mysql -h <DATABASE_HOST> -u <DATABASE_USER> -p<DATABASE_PASSWORD>
+   docker inspect electric_plan | grep -A 10 Mounts
    ```
-3. Verify databases exist:
-   ```sql
-   SHOW DATABASES LIKE 'electric_plan%';
+2. Check storage directory permissions inside container:
+   ```bash
+   docker exec electric_plan ls -la /rails/storage
    ```
-4. Check firewall rules allow MySQL connections (port 3306)
+3. Ensure database files exist:
+   ```bash
+   docker exec electric_plan ls -la /rails/storage/*.sqlite3
+   ```
+4. If files are missing, run migrations:
+   ```bash
+   docker exec electric_plan rails db:migrate
+   ```
 
 ### SSL Certificate Issues
 **Problem**: HTTPS not working
@@ -378,32 +373,34 @@ docker exec -it electric_plan bash
 
 ## Security Checklist
 
-- [ ] `.kamal/secrets` is never committed to git
 - [ ] `config/master.key` is never committed to git
-- [ ] Database passwords are strong and unique
+- [ ] `.env.production` is never committed to git
 - [ ] GitHub Personal Access Token has minimal required permissions
-- [ ] MySQL server only allows connections from application server
 - [ ] SSL/TLS is enabled (HTTPS)
 - [ ] Server firewall is configured (only allow 22, 80, 443)
-- [ ] Regular backups of MySQL databases are configured
+- [ ] Docker volume backups are scheduled (SQLite database files)
+- [ ] Storage directory has proper permissions
 
 ## Backup Strategy
 
 ### Database Backups
 
-Create automated MySQL backups:
+Create automated SQLite backups. SQLite databases are just files, so backing them up is straightforward:
 
 ```bash
-# On your MySQL server or via cron
-mysqldump -h <DATABASE_HOST> -u <DATABASE_USER> -p<DATABASE_PASSWORD> \
-  electric_plan_production > backup_$(date +%Y%m%d_%H%M%S).sql
+# Backup all SQLite databases from the Docker volume
+docker run --rm -v electric_plan_storage:/data -v $(pwd):/backup \
+  alpine sh -c "cd /data && tar czf /backup/sqlite_backup_$(date +%Y%m%d_%H%M%S).tar.gz *.sqlite3"
 
-# Backup all databases
-for db in electric_plan_production electric_plan_production_cache \
-          electric_plan_production_queue electric_plan_production_cable; do
-  mysqldump -h <DATABASE_HOST> -u <DATABASE_USER> -p<DATABASE_PASSWORD> \
-    $db > ${db}_$(date +%Y%m%d_%H%M%S).sql
-done
+# Or copy individual database files
+docker cp electric_plan:/rails/storage/production.sqlite3 \
+  ./backup_production_$(date +%Y%m%d_%H%M%S).sqlite3
+```
+
+**Schedule with cron:**
+```bash
+# Add to crontab (crontab -e)
+0 2 * * * docker run --rm -v electric_plan_storage:/data -v /backups:/backup alpine sh -c "cd /data && tar czf /backup/sqlite_backup_\$(date +\%Y\%m\%d_\%H\%M\%S).tar.gz *.sqlite3"
 ```
 
 ### Storage Backups

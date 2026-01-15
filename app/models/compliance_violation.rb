@@ -1,15 +1,14 @@
 # Plain Old Ruby Object to represent a compliance violation
 # Not persisted to database - calculated on demand
 class ComplianceViolation
-  attr_reader :rule_code, :severity, :message, :help, :resource, :affected_resources, :context
+  attr_reader :rule_code, :severity, :message, :help, :resource, :context
 
-  def initialize(rule_code:, severity:, message:, help:, resource:, affected_resources: [], context: {})
+  def initialize(rule_code:, severity:, message:, help:, resource:, context: {})
     @rule_code = rule_code
     @severity = severity.to_sym
     @message = interpolate_message(message, context)
     @help = interpolate_message(help, context)
     @resource = resource
-    @affected_resources = affected_resources
     @context = context
   end
 
@@ -21,11 +20,6 @@ class ComplianceViolation
   # Check if this is a warning-level violation
   def warning?
     severity == :warning
-  end
-
-  # Check if this is an info-level violation
-  def info?
-    severity == :info
   end
 
   # Get a human-readable resource identifier

@@ -4,34 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ElectricPlan is a Ruby on Rails 8.0.0 application configured for Docker deployment with a multi-database architecture.
+ElectricPlan is a Ruby on Rails 8.0.0 application configured for Docker deployment using SQLite3.
 
 ## Database Architecture
 
-This application uses a **multi-database setup**:
+This application uses **SQLite3** for all environments:
 
 - **Development**: SQLite3 (file-based at `storage/development.sqlite3`)
 - **Test**: SQLite3 (file-based at `storage/test.sqlite3`)
-- **Production**: MySQL with four separate databases for different concerns
+- **Production**: SQLite3 (file-based at `storage/production.sqlite3`)
+
+The application uses separate SQLite databases for different concerns:
   - Primary database (main application data)
   - Cache database (for Solid Cache)
   - Queue database (for Solid Queue)
   - Cable database (for Solid Cable)
 
-All production databases are configured via environment variables and connect to an **existing external MySQL server**. See `config/database.yml` for the full configuration.
+See `config/database.yml` for the full configuration.
 
-**Note**: Development uses SQLite for simplicity. If you need MySQL in development, use Docker via `docker-compose.yml` and update `config/database.yml` accordingly.
-
-### Database Environment Variables
-
-Production requires these environment variables:
-- `DATABASE_HOST` - MySQL server host
-- `DATABASE_NAME` - Primary database name
-- `DATABASE_USER` - MySQL username
-- `DATABASE_PASSWORD` - MySQL password
-- `DATABASE_CACHE_NAME` - Cache database (optional, defaults to `electric_plan_production_cache`)
-- `DATABASE_QUEUE_NAME` - Queue database (optional, defaults to `electric_plan_production_queue`)
-- `DATABASE_CABLE_NAME` - Cable database (optional, defaults to `electric_plan_production_cable`)
+**Important**: SQLite database files are stored in the `storage/` directory. In production, ensure this directory is persisted using Docker volumes or your hosting platform's storage solution.
 
 ## Rails Solid Stack
 
@@ -116,10 +107,6 @@ Pull and run the pre-built image from GitHub Container Registry:
 # 1. Create environment file on your server
 cat > ~/.electric_plan.env <<EOF
 RAILS_MASTER_KEY=<value from config/master.key>
-DATABASE_HOST=your-mysql-host
-DATABASE_NAME=electric_plan_production
-DATABASE_USER=your-db-user
-DATABASE_PASSWORD=your-db-password
 SOLID_QUEUE_IN_PUMA=true
 EOF
 chmod 600 ~/.electric_plan.env
@@ -142,16 +129,21 @@ docker run -d \
 docker exec electric_plan rails db:migrate db:seed
 ```
 
-**Reverse Proxy:** Use Nginx or Caddy in front of the container for SSL/HTTPS.
+**Important Notes:**
+- SQLite database files are stored in `/rails/storage` inside the container
+- The volume `electric_plan_storage` persists the database across container restarts
+- **Reverse Proxy:** Use Nginx or Caddy in front of the container for SSL/HTTPS
 
 ### Cloud Platform Deployment
 
 The Docker image can also be deployed to cloud platforms:
-- **Google Cloud Run**: Deploy directly from ghcr.io
-- **AWS ECS/Fargate**: Use the ghcr.io image
-- **Azure Container Instances**: Pull from ghcr.io
-- **DigitalOcean App Platform**: Connect to GitHub Container Registry
-- **Fly.io**: Deploy using `flyctl`
+- **Google Cloud Run**: Deploy directly from ghcr.io (ensure persistent volume for /rails/storage)
+- **AWS ECS/Fargate**: Use the ghcr.io image with EFS for persistent storage
+- **Azure Container Instances**: Pull from ghcr.io with Azure File Share
+- **DigitalOcean App Platform**: Connect to GitHub Container Registry with persistent volumes
+- **Fly.io**: Deploy using `flyctl` with Fly Volumes for database persistence
+
+**Critical**: All platforms must provide persistent storage for the `/rails/storage` directory to preserve the SQLite database.
 
 ### Required Environment Variables for Production
 
@@ -159,28 +151,15 @@ All deployment options require these environment variables:
 
 **Required:**
 - `RAILS_MASTER_KEY` - From `config/master.key` (keep secret!)
-- `DATABASE_HOST` - MySQL server hostname or IP
-- `DATABASE_NAME` - Primary database name
-- `DATABASE_USER` - MySQL username
-- `DATABASE_PASSWORD` - MySQL password
 
 **Optional (with defaults):**
-- `DATABASE_CACHE_NAME` - Defaults to `electric_plan_production_cache`
-- `DATABASE_QUEUE_NAME` - Defaults to `electric_plan_production_queue`
-- `DATABASE_CABLE_NAME` - Defaults to `electric_plan_production_cable`
 - `SOLID_QUEUE_IN_PUMA` - Defaults to `true` (runs background jobs in web server)
 
 ### Pre-Deployment Checklist
 
 Before deploying to production:
 
-1. **Database Setup**: Create the four MySQL databases:
-   ```sql
-   CREATE DATABASE electric_plan_production;
-   CREATE DATABASE electric_plan_production_cache;
-   CREATE DATABASE electric_plan_production_queue;
-   CREATE DATABASE electric_plan_production_cable;
-   ```
+1. **Persistent Storage**: Ensure `/rails/storage` is backed by a persistent volume
 
 2. **Run Migrations**: After first deployment:
    ```bash
@@ -194,11 +173,13 @@ Before deploying to production:
 
 4. **SSL/TLS**: Configure reverse proxy (Nginx with Certbot, or Caddy for automatic HTTPS)
 
+5. **Backups**: Set up regular backups of the `storage/` directory containing SQLite databases
+
 ## Testing
 
 - Test framework: Minitest (Rails default)
 - System tests: Capybara + Selenium WebDriver
-- Test database: SQLite3 (configured separately from development MySQL)
+- Test database: SQLite3 (`storage/test.sqlite3`)
 - Test helper: `test/test_helper.rb`
 - System test base: `test/application_system_test_case.rb`
 
@@ -392,9 +373,9 @@ rails db:migrate
 
 ## Key Files
 
-- `config/database.yml` - Multi-database configuration with environment variable support
-- `docker-compose.yml` - Local development environment with MySQL 8.0
+- `config/database.yml` - SQLite database configuration for all environments
 - `Dockerfile` - Production-ready multi-stage build
-- `config/deploy.yml` - Kamal deployment configuration
 - `bin/dev` - Development server startup script
 - `app/assets/stylesheets/application.css` - All CRUD styling and UI components
+- `config/compliance_rules.yml` - All 33 electrical compliance rules
+- `app/services/compliance_engine.rb` - Compliance validation engine
