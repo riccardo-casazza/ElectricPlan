@@ -98,14 +98,14 @@ ActiveRecord::Base.transaction do
     violations.any? { |v| v.rule_code.to_s == "light_max_current" }
   end
 
-  # TEST 5: Convector breaker with insufficient cable (should fail)
+  # TEST 5: Convector breaker exceeding max current (should fail)
   total_tests += 1
-  passed_tests += 1 if test("convector_min_cable rule - should detect insufficient cable") do
-    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, position: 5)
-    Item.create!(breaker: breaker, room: room, name: "Convector 1", item_type: convector_type, power_watts: 2000, input_cable: cable_1_5)
+  passed_tests += 1 if test("convector_max_current rule - should detect >20A") do
+    breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 25, position: 5)
+    Item.create!(breaker: breaker, room: room, name: "Convector 1", item_type: convector_type, power_watts: 2000, input_cable: cable_2_5)
 
     violations = engine.check_resource(breaker)
-    violations.any? { |v| v.rule_code.to_s == "convector_min_cable" }
+    violations.any? { |v| v.rule_code.to_s == "convector_max_current" }
   end
 
   # TEST 6: Convector breaker exceeding 4500W (should fail)
@@ -119,15 +119,14 @@ ActiveRecord::Base.transaction do
     violations.any? { |v| v.rule_code.to_s == "convector_max_power" }
   end
 
-  # TEST 7: Kitchen socket breaker with non-kitchen sockets (should fail)
+  # TEST 7: Kitchen socket breaker exceeding max count (should fail)
   total_tests += 1
-  passed_tests += 1 if test("kitchen_socket_exclusive rule - should detect non-kitchen items") do
+  passed_tests += 1 if test("kitchen_socket_max_count rule - should detect >6 sockets") do
     breaker = Breaker.create!(residual_current_device: rcd, output_max_current: 20, position: 7)
-    Item.create!(breaker: breaker, room: kitchen, name: "Socket 1", item_type: socket_type)
-    Item.create!(breaker: breaker, room: room, name: "Socket 2", item_type: socket_type)
+    7.times { |i| Item.create!(breaker: breaker, room: kitchen, name: "Kitchen Socket #{i+1}", item_type: socket_type) }
 
     violations = engine.check_resource(breaker)
-    violations.any? { |v| v.rule_code.to_s == "kitchen_socket_exclusive" }
+    violations.any? { |v| v.rule_code.to_s == "kitchen_socket_max_count" }
   end
 
   # TEST 8: System rules - insufficient light breakers
