@@ -120,6 +120,84 @@ breaker_rules:
     message: "Socket breaker is {actual_value}A (must be 16A or 20A)"
     help: "Change breaker amperage to either 16A or 20A"
 
+  kitchen_socket_current:
+    applies_to: Breaker
+    description: "Kitchen socket breakers must be 20A"
+    condition:
+      type: kitchen_socket_breaker
+    validation:
+      type: max_attribute
+      attribute: output_max_current
+      max_value: 20
+    severity: error
+    message: "Kitchen socket breaker must be 20A (currently: {actual_value}A)"
+    help: "Change breaker amperage to 20A for kitchen sockets"
+
+  kitchen_socket_min_current:
+    applies_to: Breaker
+    description: "Kitchen socket breakers must be 20A"
+    condition:
+      type: kitchen_socket_breaker
+    validation:
+      type: attribute_in_list
+      attribute: output_max_current
+      allowed_values: [20]
+    severity: error
+    message: "Kitchen socket breaker must be 20A (currently: {actual_value}A)"
+    help: "Change breaker amperage to 20A for kitchen sockets"
+
+  kitchen_socket_cable:
+    applies_to: Breaker
+    description: "Kitchen socket breakers must use 2.5mm2 cable"
+    condition:
+      type: kitchen_socket_breaker
+    validation:
+      type: association_attribute
+      path: breaker.output_cable.section
+      must_equal: "2.5mm2"
+    severity: error
+    message: "Kitchen socket breaker must use 2.5mm2 cable (currently: {actual_value})"
+    help: "Change the output cable to 2.5mm2 for kitchen sockets"
+
+  kitchen_socket_max_count:
+    applies_to: Breaker
+    description: "Kitchen socket breakers can have maximum 6 sockets"
+    condition:
+      type: kitchen_socket_breaker
+    validation:
+      type: max_count
+      attribute: socket_items
+      max_value: 6
+    severity: error
+    message: "Kitchen socket breaker has {actual_count} sockets (maximum {max_value} allowed)"
+    help: "Kitchen circuits are limited to 6 sockets maximum"
+
+  shutter_current:
+    applies_to: Breaker
+    description: "Shutter breakers must be 16A"
+    condition:
+      type: has_shutter_items
+    validation:
+      type: attribute_in_list
+      attribute: output_max_current
+      allowed_values: [16]
+    severity: error
+    message: "Shutter breaker must be 16A (currently: {actual_value}A)"
+    help: "Change breaker amperage to 16A for shutters"
+
+  shutter_cable:
+    applies_to: Breaker
+    description: "Shutter breakers must use 1.5mm2 cable"
+    condition:
+      type: has_shutter_items
+    validation:
+      type: association_attribute
+      path: breaker.output_cable.section
+      must_equal: "1.5mm2"
+    severity: error
+    message: "Shutter breaker must use 1.5mm2 cable (currently: {actual_value})"
+    help: "Change the output cable to 1.5mm2 for shutters"
+
 # ========================================
 # ITEM RULES
 # ========================================
@@ -208,3 +286,13 @@ system_rules:
     severity: error
     message: "Installation has only {actual_count} light breaker(s) (minimum {min_value} required)"
     help: "Create at least one additional breaker with light items"
+
+  min_shutter_circuits:
+    applies_to: System
+    description: "Installation must have at least 1 dedicated shutter breaker"
+    validation:
+      type: min_shutter_breakers
+      min_value: 1
+    severity: error
+    message: "Installation has {actual_count} shutter breaker(s) (minimum {min_value} required)"
+    help: "Create at least one breaker dedicated to roller shutters"

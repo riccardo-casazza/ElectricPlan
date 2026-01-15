@@ -145,6 +145,20 @@ class ComplianceEngine
       return false unless resource.respond_to?(:item_type)
       resource.item_type.name.downcase == condition["value"].to_s.downcase
 
+    when "kitchen_socket_breaker"
+      # Check if this is a socket breaker serving a kitchen
+      return false unless resource.respond_to?(:items)
+      has_sockets = resource.items.joins(:item_type).where(item_types: { name: "socket" }).exists?
+      return false unless has_sockets
+
+      # Check if any of the items are in a kitchen
+      resource.items.joins(:room).where(rooms: { is_kitchen: true }).exists?
+
+    when "has_shutter_items"
+      # Check if resource has any roller shutter items
+      return false unless resource.respond_to?(:items)
+      resource.items.joins(:item_type).where(item_types: { name: "roller shutters" }).exists?
+
     else
       true
     end
@@ -188,6 +202,15 @@ class ComplianceEngine
                                      .distinct
                                      .count
       light_breakers_count >= min_value
+
+    when "min_shutter_breakers"
+      min_value = validation["min_value"] || 1
+      shutter_breakers_count = Breaker.joins(items: :item_type)
+                                       .where(item_types: { name: "roller shutters" })
+                                       .distinct
+                                       .count
+      shutter_breakers_count >= min_value
+
     else
       true
     end
@@ -319,10 +342,22 @@ class ComplianceEngine
     context = {}
 
     # Add specific context for system-level violations
-    if rule_config["validation"]["type"] == "min_light_breakers"
+    validation_type = rule_config["validation"]["type"]
+
+    if validation_type == "min_light_breakers"
       min_value = rule_config["validation"]["min_value"] || 2
       actual_count = Breaker.joins(items: :item_type)
                             .where(item_types: { name: "light" })
+                            .distinct
+                            .count
+      context = {
+        actual_count: actual_count,
+        min_value: min_value
+      }
+    elsif validation_type == "min_shutter_breakers"
+      min_value = rule_config["validation"]["min_value"] || 1
+      actual_count = Breaker.joins(items: :item_type)
+                            .where(item_types: { name: "roller shutters" })
                             .distinct
                             .count
       context = {
