@@ -5,6 +5,11 @@
   </p>
 
   <p>
+    <strong>Dwelling:</strong>
+    <%= electrical_panel.dwelling&.name || "N/A" %>
+  </p>
+
+  <p>
     <strong>Room:</strong>
     <%= electrical_panel.room.name %>
   </p>
@@ -21,7 +26,7 @@
 
   <p>
     <strong>Input Cable:</strong>
-    <%= electrical_panel.input_cable&.section || "N/A" %>
+    <%= electrical_panel.input_cable ? "#{electrical_panel.input_cable.section} mm²" : "N/A" %>
   </p>
 
 </div>

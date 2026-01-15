@@ -1,0 +1,22 @@
+<%= form_with(model: dwelling, class: "crud-form") do |form| %>
+  <% if dwelling.errors.any? %>
+    <div class="error-messages">
+      <h3><%= pluralize(dwelling.errors.count, "error") %> prohibited this dwelling from being saved:</h3>
+      <ul>
+        <% dwelling.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :name, "Dwelling Name" %>
+    <%= form.text_field :name, class: "form-input", placeholder: "e.g., Main House, Apartment 101" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "button-primary" %>
+    <%= link_to "Cancel", dwellings_path, class: "button-secondary" %>
+  </div>
+<% end %>

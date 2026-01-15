@@ -1,0 +1,9 @@
+<% content_for :title, "Edit Dwelling" %>
+
+<div style="margin-bottom: 1rem;">
+  <%= link_to "← Back to Dwellings", dwellings_path %>
+</div>
+
+<h1>Edit Dwelling</h1>
+
+<%= render "form", dwelling: @dwelling %>

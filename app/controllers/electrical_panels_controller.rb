@@ -74,6 +74,6 @@ class ElectricalPanelsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def electrical_panel_params
-      params.expect(electrical_panel: [ :name, :room_id, :input_max_current, :input_cable_id ])
+      params.expect(electrical_panel: [ :name, :dwelling_id, :room_id, :input_max_current, :input_cable_id ])
     end
 end

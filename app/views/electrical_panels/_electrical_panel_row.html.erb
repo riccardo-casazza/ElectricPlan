@@ -3,7 +3,7 @@
   <% form_id = dom_id(electrical_panel, :form) %>
   <% if electrical_panel.errors.any? %>
     <tr>
-      <td colspan="5" style="background-color: #fee; padding: 1rem;">
+      <td colspan="6" style="background-color: #fee; padding: 1rem;">
         <strong><%= pluralize(electrical_panel.errors.count, "error") %> prohibited this electrical panel from being saved:</strong>
         <ul style="margin: 0.5rem 0 0 1.5rem;">
           <% electrical_panel.errors.each do |error| %>
@@ -20,6 +20,14 @@
       <% else %>
         (auto-generated)
       <% end %>
+    </td>
+    <td>
+      <select name="electrical_panel[dwelling_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 150px;" data-controller="select">
+        <option value="">Select a dwelling</option>
+        <% Dwelling.all.each do |dwelling| %>
+          <option value="<%= dwelling.id %>" <%= 'selected' if electrical_panel.dwelling_id == dwelling.id %>><%= dwelling.name %></option>
+        <% end %>
+      </select>
     </td>
     <td>
       <select name="electrical_panel[room_id]" form="<%= form_id %>" class="form-input" style="width: 100%; min-width: 200px;" data-controller="select" data-action="change->electrical-panel#updateFloor" data-electrical-panel-target="roomSelect">
@@ -50,9 +58,10 @@
 <% else %>
   <tr id="<%= dom_id(electrical_panel) %>">
     <td><%= electrical_panel.name %></td>
+    <td><%= electrical_panel.dwelling&.name || "N/A" %></td>
     <td><%= "#{electrical_panel.room.floor.name} - #{electrical_panel.room.name}" %></td>
     <td><%= electrical_panel.room.floor.name %></td>
-    <td><%= electrical_panel.input_cable&.section || "N/A" %></td>
+    <td><%= electrical_panel.input_cable&.section ? "#{electrical_panel.input_cable.section} mm²" : "N/A" %></td>
     <td class="actions">
       <% has_any_errors = electrical_panel.all_violations.any?(&:error?) %>
       <% compliance_class = has_any_errors ? "button-small button-danger" : "button-small button-success" %>

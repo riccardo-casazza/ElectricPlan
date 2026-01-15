@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_15_084503) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_15_090720) do
   create_table "breakers", force: :cascade do |t|
     t.integer "residual_current_device_id", null: false
     t.integer "position"
@@ -28,6 +28,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_15_084503) do
     t.decimal "section", precision: 5, scale: 2
   end
 
+  create_table "dwellings", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "electrical_panels", force: :cascade do |t|
     t.string "name"
     t.integer "room_id", null: false
@@ -35,6 +41,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_15_084503) do
     t.datetime "updated_at", null: false
     t.integer "input_cable_id"
     t.integer "input_max_current"
+    t.integer "dwelling_id"
+    t.index ["dwelling_id"], name: "index_electrical_panels_on_dwelling_id"
     t.index ["input_cable_id"], name: "index_electrical_panels_on_input_cable_id"
     t.index ["room_id"], name: "index_electrical_panels_on_room_id"
   end
@@ -96,6 +104,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_15_084503) do
 
   add_foreign_key "breakers", "residual_current_devices"
   add_foreign_key "electrical_panels", "cables", column: "input_cable_id"
+  add_foreign_key "electrical_panels", "dwellings"
   add_foreign_key "items", "breakers"
   add_foreign_key "items", "cables", column: "input_cable_id"
   add_foreign_key "items", "item_types"

@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :dwellings
   get "configuration/index"
   resources :cables
   resources :items do
