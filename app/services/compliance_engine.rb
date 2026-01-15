@@ -89,7 +89,7 @@ class ComplianceEngine
 
   def load_rules
     file_path = Rails.root.join("config", "compliance_rules.yml")
-    YAML.load_file(file_path, permitted_classes: [Symbol])
+    YAML.load_file(file_path, permitted_classes: [ Symbol ])
   rescue => e
     Rails.logger.error "Failed to load compliance rules: #{e.message}"
     {}
@@ -167,7 +167,7 @@ class ComplianceEngine
     when "has_high_power_appliance_items"
       # Check if resource has dishwasher, washing machine, dryer, or oven items
       return false unless resource.respond_to?(:items)
-      appliance_types = ["dishwasher", "washing machine", "dryer", "oven"]
+      appliance_types = [ "dishwasher", "washing machine", "dryer", "oven" ]
       resource.items.joins(:item_type).where("LOWER(item_types.name) IN (?)", appliance_types).exists?
 
     when "has_cooktop_items"
@@ -235,7 +235,7 @@ class ComplianceEngine
 
     when "min_appliance_circuits"
       min_value = validation["min_value"] || 3
-      appliance_types = validation["appliance_types"] || ["dishwasher", "washing machine", "dryer", "oven"]
+      appliance_types = validation["appliance_types"] || [ "dishwasher", "washing machine", "dryer", "oven" ]
 
       appliance_breakers_count = Breaker.joins(items: :item_type)
                                          .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
@@ -447,7 +447,7 @@ class ComplianceEngine
       }
     elsif validation_type == "min_appliance_circuits"
       min_value = rule_config["validation"]["min_value"] || 3
-      appliance_types = rule_config["validation"]["appliance_types"] || ["dishwasher", "washing machine", "dryer", "oven"]
+      appliance_types = rule_config["validation"]["appliance_types"] || [ "dishwasher", "washing machine", "dryer", "oven" ]
 
       actual_count = Breaker.joins(items: :item_type)
                             .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))

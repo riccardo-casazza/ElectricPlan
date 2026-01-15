@@ -21,15 +21,15 @@ def test(name, &block)
     result = block.call
     if result
       puts "✓ PASS"
-      return true
+      true
     else
       puts "✗ FAIL"
-      return false
+      false
     end
   rescue => e
     puts "✗ ERROR: #{e.message}"
     puts e.backtrace.first(3)
-    return false
+    false
   end
 end
 

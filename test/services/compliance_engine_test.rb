@@ -549,9 +549,9 @@ class ComplianceEngineTest < ActiveSupport::TestCase
 
     # Create 3 appliance breakers
     [
-      [@dishwasher_type, "Dishwasher"],
-      [@oven_type, "Oven"],
-      [ItemType.find_or_create_by!(name: "washing machine"), "Washing Machine"]
+      [ @dishwasher_type, "Dishwasher" ],
+      [ @oven_type, "Oven" ],
+      [ ItemType.find_or_create_by!(name: "washing machine"), "Washing Machine" ]
     ].each do |type, name|
       breaker = Breaker.create!(
         residual_current_device: @rcd,
@@ -563,7 +563,7 @@ class ComplianceEngineTest < ActiveSupport::TestCase
     end
 
     violations = @engine.check_system
-    system_violations = violations.select { |v| ["min_light_circuits", "min_shutter_circuits", "min_appliance_circuits"].include?(v.rule_code.to_s) }
+    system_violations = violations.select { |v| [ "min_light_circuits", "min_shutter_circuits", "min_appliance_circuits" ].include?(v.rule_code.to_s) }
     assert system_violations.empty?, "Should pass all system rules when minimum circuits are present"
   end
 end
