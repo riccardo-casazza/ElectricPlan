@@ -415,22 +415,22 @@ system_rules:
     help: "Create at least one additional breaker with light items"
 
   min_shutter_circuits:
-    applies_to: System
-    description: "Installation must have at least 1 dedicated shutter breaker"
+    applies_to: Dwelling
+    description: "Dwelling must have at least 1 dedicated shutter breaker"
     validation:
       type: min_shutter_breakers
       min_value: 1
     severity: error
-    message: "Installation has {actual_count} shutter breaker(s) (minimum {min_value} required)"
+    message: "Dwelling has {actual_count} shutter breaker(s) (minimum {min_value} required)"
     help: "Create at least one breaker dedicated to roller shutters"
 
   min_appliance_circuits:
-    applies_to: System
-    description: "Installation must have at least 3 dedicated appliance circuits"
+    applies_to: Dwelling
+    description: "Dwelling must have at least 3 dedicated appliance circuits"
     validation:
       type: min_appliance_circuits
       min_value: 3
       appliance_types: ["dishwasher", "washing machine", "dryer", "oven"]
     severity: error
-    message: "Installation has {actual_count} appliance circuit(s) (minimum {min_value} required for dishwasher, washing machine, dryer, or oven)"
+    message: "Dwelling has {actual_count} appliance circuit(s) (minimum {min_value} required for dishwasher, washing machine, dryer, or oven)"
     help: "Create at least 3 dedicated breakers for dishwashers, washing machines, dryers, or ovens"

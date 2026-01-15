@@ -63,4 +63,22 @@ module ApplicationHelper
       show_resource_link: false
     }
   end
+
+  # Show dwelling-level compliance violations for all dwellings
+  def dwelling_compliance_alerts
+    engine = ComplianceEngine.new
+    all_violations = []
+
+    Dwelling.find_each do |dwelling|
+      violations = engine.check_dwelling(dwelling)
+      all_violations.concat(violations) unless violations.empty?
+    end
+
+    return if all_violations.empty?
+
+    render partial: "shared/compliance_alerts", locals: {
+      violations: all_violations,
+      show_resource_link: true
+    }
+  end
 end

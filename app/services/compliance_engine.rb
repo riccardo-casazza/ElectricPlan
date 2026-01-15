@@ -42,6 +42,21 @@ class ComplianceEngine
     violations
   end
 
+  # Check dwelling-level violations for a specific dwelling
+  # Returns an array of ComplianceViolation objects
+  def check_dwelling(dwelling)
+    violations = []
+    dwelling_rules = rules_for_type("Dwelling")
+
+    dwelling_rules.each do |rule_code, rule_config|
+      unless passes_dwelling_validation?(dwelling, rule_config["validation"])
+        violations << create_dwelling_violation(rule_code, rule_config, dwelling)
+      end
+    end
+
+    violations
+  end
+
   # Check upstream violations (violations that would affect this resource)
   # For example, if a Breaker has too many items, all those Items are affected
   def check_upstream_violations(resource)
@@ -238,6 +253,37 @@ class ComplianceEngine
       appliance_types = validation["appliance_types"] || [ "dishwasher", "washing machine", "dryer", "oven" ]
 
       appliance_breakers_count = Breaker.joins(items: :item_type)
+                                         .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
+                                         .distinct
+                                         .count
+      appliance_breakers_count >= min_value
+
+    else
+      true
+    end
+  end
+
+  def passes_dwelling_validation?(dwelling, validation)
+    return true if validation.nil?
+
+    validation_type = validation["type"]
+
+    case validation_type
+    when "min_shutter_breakers"
+      min_value = validation["min_value"] || 1
+      shutter_breakers_count = Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
+                                       .where(dwellings: { id: dwelling.id })
+                                       .where(item_types: { name: "roller shutters" })
+                                       .distinct
+                                       .count
+      shutter_breakers_count >= min_value
+
+    when "min_appliance_circuits"
+      min_value = validation["min_value"] || 3
+      appliance_types = validation["appliance_types"] || [ "dishwasher", "washing machine", "dryer", "oven" ]
+
+      appliance_breakers_count = Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
+                                         .where(dwellings: { id: dwelling.id })
                                          .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
                                          .distinct
                                          .count
@@ -469,6 +515,49 @@ class ComplianceEngine
       message: rule_config["message"],
       help: rule_config["help"],
       resource: system_resource,
+      context: context
+    )
+  end
+
+  def create_dwelling_violation(rule_code, rule_config, dwelling)
+    context = {}
+
+    # Add specific context for dwelling-level violations
+    validation_type = rule_config["validation"]["type"]
+
+    if validation_type == "min_shutter_breakers"
+      min_value = rule_config["validation"]["min_value"] || 1
+      actual_count = Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
+                            .where(dwellings: { id: dwelling.id })
+                            .where(item_types: { name: "roller shutters" })
+                            .distinct
+                            .count
+      context = {
+        actual_count: actual_count,
+        min_value: min_value
+      }
+    elsif validation_type == "min_appliance_circuits"
+      min_value = rule_config["validation"]["min_value"] || 3
+      appliance_types = rule_config["validation"]["appliance_types"] || [ "dishwasher", "washing machine", "dryer", "oven" ]
+
+      actual_count = Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
+                            .where(dwellings: { id: dwelling.id })
+                            .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
+                            .distinct
+                            .count
+      context = {
+        actual_count: actual_count,
+        min_value: min_value,
+        appliance_types: appliance_types.join(", ")
+      }
+    end
+
+    ComplianceViolation.new(
+      rule_code: rule_code,
+      severity: rule_config["severity"] || "error",
+      message: rule_config["message"],
+      help: rule_config["help"],
+      resource: dwelling,
       context: context
     )
   end
