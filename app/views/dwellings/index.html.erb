@@ -26,7 +26,10 @@
         <td><%= dwelling.name %></td>
         <td><%= dwelling.electrical_panels.count %></td>
         <td class="actions">
-          <%= link_to "Show", dwelling, class: "button-small" %>
+          <% has_any_errors = dwelling.has_compliance_errors? %>
+          <% compliance_class = has_any_errors ? "button-small button-danger" : "button-small button-success" %>
+          <% compliance_icon = has_any_errors ? "⚠" : "✓" %>
+          <%= link_to compliance_icon, dwelling, class: compliance_class, title: has_any_errors ? "Has compliance issues" : "Compliant" %>
           <%= link_to "Edit", edit_dwelling_path(dwelling), class: "button-small button-secondary" %>
           <%= button_to "Delete", dwelling, method: :delete, class: "button-small button-danger", form: { data: { turbo_confirm: "Are you sure you want to delete this dwelling and all its electrical panels?" } } %>
         </td>

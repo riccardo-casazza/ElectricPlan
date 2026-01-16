@@ -6,6 +6,8 @@
 
 <h1>Dwelling Details</h1>
 
+<%= render partial: "shared/compliance_alerts", locals: { violations: @dwelling.compliance_violations, show_resource_link: false } if @dwelling.compliance_violations.any? %>
+
 <%= render @dwelling %>
 
 <div style="margin-top: 2rem;">
