@@ -1,5 +1,10 @@
 Rails.application.routes.draw do
   resources :dwellings
+
+  # Location API for cascading dropdowns
+  get "locations/regions", to: "locations#regions"
+  get "locations/departments", to: "locations#departments"
+
   get "configuration/index"
   resources :cables
   resources :items do

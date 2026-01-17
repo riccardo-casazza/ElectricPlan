@@ -3,6 +3,37 @@ class Dwelling < ApplicationRecord
 
   validates :name, presence: true
 
+  # Location helper methods using Carmen
+  def country
+    Carmen::Country.coded(country_code) if country_code.present?
+  end
+
+  def region
+    return nil unless country && region_code.present?
+    country.subregions.coded(region_code)
+  end
+
+  def department
+    return nil unless region && department_code.present?
+    region.subregions.coded(department_code)
+  end
+
+  def country_name
+    country&.name
+  end
+
+  def region_name
+    region&.name
+  end
+
+  def department_name
+    department&.name
+  end
+
+  def full_location
+    [ department_name, region_name, country_name ].compact.join(", ")
+  end
+
   # Get dwelling-level compliance violations
   def compliance_violations
     @compliance_violations ||= engine.check_dwelling(self)

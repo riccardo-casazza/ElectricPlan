@@ -65,6 +65,6 @@ class DwellingsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def dwelling_params
-      params.expect(dwelling: [ :name ])
+      params.expect(dwelling: [ :name, :country_code, :region_code, :department_code ])
     end
 end

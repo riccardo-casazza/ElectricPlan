@@ -1,4 +1,4 @@
-<%= form_with(model: dwelling, class: "crud-form") do |form| %>
+<%= form_with(model: dwelling, class: "crud-form", data: { controller: "location-select" }) do |form| %>
   <% if dwelling.errors.any? %>
     <div class="error-messages">
       <h3><%= pluralize(dwelling.errors.count, "error") %> prohibited this dwelling from being saved:</h3>
@@ -13,6 +13,30 @@
   <div class="form-field">
     <%= form.label :name, "Dwelling Name" %>
     <%= form.text_field :name, class: "form-input", placeholder: "e.g., Main House, Apartment 101" %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :country_code, "Country" %>
+    <%= form.select :country_code,
+        Carmen::Country.all.map { |c| [c.name, c.code] }.sort_by(&:first),
+        { include_blank: "Select a country", selected: dwelling.country_code },
+        { class: "form-input", data: { location_select_target: "country", action: "change->location-select#countryChanged" } } %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :region_code, "Region" %>
+    <%= form.select :region_code,
+        dwelling.country&.subregions&.map { |r| [r.name, r.code] }&.sort_by(&:first) || [],
+        { include_blank: "Select a region", selected: dwelling.region_code },
+        { class: "form-input", data: { location_select_target: "region", action: "change->location-select#regionChanged" } } %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :department_code, "Department" %>
+    <%= form.select :department_code,
+        dwelling.region&.subregions&.map { |d| [d.name, d.code] }&.sort_by(&:first) || [],
+        { include_blank: "Select a department", selected: dwelling.department_code },
+        { class: "form-input", data: { location_select_target: "department" } } %>
   </div>
 
   <div class="form-actions">

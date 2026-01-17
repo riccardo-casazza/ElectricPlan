@@ -4,4 +4,29 @@
     <%= dwelling.name %>
   </p>
 
+  <% if dwelling.country_code.present? %>
+    <p>
+      <strong>Location:</strong>
+      <%= dwelling.full_location %>
+    </p>
+
+    <p>
+      <strong>Country:</strong>
+      <%= dwelling.country_name %>
+    </p>
+
+    <% if dwelling.region_code.present? %>
+      <p>
+        <strong>Region:</strong>
+        <%= dwelling.region_name %>
+      </p>
+    <% end %>
+
+    <% if dwelling.department_code.present? %>
+      <p>
+        <strong>Department:</strong>
+        <%= dwelling.department_name %>
+      </p>
+    <% end %>
+  <% end %>
 </div>

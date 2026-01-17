@@ -16,6 +16,7 @@
   <thead>
     <tr>
       <th>Name</th>
+      <th>Location</th>
       <th>Electrical Panels</th>
       <th>Actions</th>
     </tr>
@@ -24,6 +25,7 @@
     <% @dwellings.each do |dwelling| %>
       <tr>
         <td><%= dwelling.name %></td>
+        <td><%= dwelling.full_location.presence || "—" %></td>
         <td><%= dwelling.electrical_panels.count %></td>
         <td class="actions">
           <% has_any_errors = dwelling.has_compliance_errors? %>
