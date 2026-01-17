@@ -289,6 +289,13 @@ class ComplianceEngine
                                          .count
       appliance_breakers_count >= min_value
 
+    when "surge_protection_required"
+      # If surge protection is not required, validation passes
+      return true unless dwelling.surge_protection_required?
+
+      # If required, check if it's installed
+      dwelling.has_surge_protection?
+
     else
       true
     end
@@ -550,6 +557,9 @@ class ComplianceEngine
         min_value: min_value,
         appliance_types: appliance_types.join(", ")
       }
+    elsif validation_type == "surge_protection_required"
+      reason = surge_protection_reason(dwelling)
+      context = { reason: reason }
     end
 
     ComplianceViolation.new(
@@ -560,6 +570,23 @@ class ComplianceEngine
       resource: dwelling,
       context: context
     )
+  end
+
+  def surge_protection_reason(dwelling)
+    reasons = []
+
+    reasons << "has lightning protection" if dwelling.has_lightning_protection
+
+    if dwelling.in_aq2_zone?
+      reasons << "overhead power line in AQ2 zone" if dwelling.has_overhead_power_line
+      reasons << "safety-critical persons in AQ2 zone" if dwelling.has_safety_critical_persons
+    end
+
+    if dwelling.outside_aq2_zone?
+      reasons << "sensitive equipment outside AQ2 zone" if dwelling.has_sensitive_equipment
+    end
+
+    reasons.join(", ")
   end
 
   def build_context(resource, validation)

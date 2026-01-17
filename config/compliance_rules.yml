@@ -434,3 +434,12 @@ system_rules:
     severity: error
     message: "Dwelling has {actual_count} appliance circuit(s) (minimum {min_value} required for dishwasher, washing machine, dryer, or oven)"
     help: "Create at least 3 dedicated breakers for dishwashers, washing machines, dryers, or ovens"
+
+  surge_protection_required:
+    applies_to: Dwelling
+    description: "Surge protection is required based on dwelling characteristics and location (NF C 15-100)"
+    validation:
+      type: surge_protection_required
+    severity: error
+    message: "Surge protection is required but not installed ({reason})"
+    help: "Install a surge protection device (parafoudre) in the electrical panel"

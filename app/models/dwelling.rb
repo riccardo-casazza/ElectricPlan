@@ -1,4 +1,6 @@
 class Dwelling < ApplicationRecord
+  include Aq2Zone
+
   has_many :electrical_panels, dependent: :destroy
 
   validates :name, presence: true
@@ -32,6 +34,38 @@ class Dwelling < ApplicationRecord
 
   def full_location
     [ department_name, region_name, country_name ].compact.join(", ")
+  end
+
+  # Determine if surge protection is required per NF C 15-100
+  # Returns true if any of these conditions are met:
+  # 1. Has lightning protection (lightning rod or within 50m of protected building)
+  # 2. Has overhead power line AND is in AQ2 zone
+  # 3. Has safety-critical persons AND is in AQ2 zone
+  # 4. Has sensitive equipment AND is OUTSIDE AQ2 zone
+  def surge_protection_required?
+    return true if has_lightning_protection
+
+    if in_aq2_zone?
+      return true if has_overhead_power_line
+      return true if has_safety_critical_persons
+    end
+
+    if outside_aq2_zone?
+      return true if has_sensitive_equipment
+    end
+
+    false
+  end
+
+  # Check if dwelling has surge protection installed
+  def has_surge_protection?
+    surge_protection_type = ItemType.find_by("LOWER(name) = ?", "surge protection")
+    return false unless surge_protection_type
+
+    Item.joins(breaker: { residual_current_device: { electrical_panel: :dwelling } })
+        .where(dwellings: { id: id })
+        .where(item_type: surge_protection_type)
+        .exists?
   end
 
   # Get dwelling-level compliance violations
