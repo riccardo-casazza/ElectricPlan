@@ -39,6 +39,30 @@
         { class: "form-input", data: { location_select_target: "department" } } %>
   </div>
 
+  <fieldset style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+    <legend style="font-weight: bold; padding: 0 0.5rem;">Electrical Safety Characteristics</legend>
+
+    <div class="form-field" style="margin-bottom: 0.75rem;">
+      <%= form.check_box :has_lightning_protection, class: "form-checkbox" %>
+      <%= form.label :has_lightning_protection, "Has lightning rod or within 50m of protected building", style: "display: inline; margin-left: 0.5rem;" %>
+    </div>
+
+    <div class="form-field" style="margin-bottom: 0.75rem;">
+      <%= form.check_box :has_overhead_power_line, class: "form-checkbox" %>
+      <%= form.label :has_overhead_power_line, "Fully or partially overhead power supply", style: "display: inline; margin-left: 0.5rem;" %>
+    </div>
+
+    <div class="form-field" style="margin-bottom: 0.75rem;">
+      <%= form.check_box :has_safety_critical_persons, class: "form-checkbox" %>
+      <%= form.label :has_safety_critical_persons, "Safety of persons is a concern (e.g., medical equipment)", style: "display: inline; margin-left: 0.5rem;" %>
+    </div>
+
+    <div class="form-field" style="margin-bottom: 0;">
+      <%= form.check_box :has_sensitive_equipment, class: "form-checkbox" %>
+      <%= form.label :has_sensitive_equipment, "Contains sensitive equipment (computers, electronics)", style: "display: inline; margin-left: 0.5rem;" %>
+    </div>
+  </fieldset>
+
   <div class="form-actions">
     <%= form.submit class: "button-primary" %>
     <%= link_to "Cancel", dwellings_path, class: "button-secondary" %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_17_164820) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_17_171238) do
   create_table "breakers", force: :cascade do |t|
     t.integer "residual_current_device_id", null: false
     t.integer "position"
@@ -35,6 +35,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_164820) do
     t.string "country_code"
     t.string "region_code"
     t.string "department_code"
+    t.boolean "has_lightning_protection", default: false
+    t.boolean "has_overhead_power_line", default: false
+    t.boolean "has_safety_critical_persons", default: false
+    t.boolean "has_sensitive_equipment", default: false
   end
 
   create_table "electrical_panels", force: :cascade do |t|

@@ -29,4 +29,26 @@
       </p>
     <% end %>
   <% end %>
+
+  <h3 style="margin-top: 1.5rem;">Electrical Safety Characteristics</h3>
+
+  <p>
+    <strong>Lightning protection:</strong>
+    <%= dwelling.has_lightning_protection ? "Yes" : "No" %>
+  </p>
+
+  <p>
+    <strong>Overhead power supply:</strong>
+    <%= dwelling.has_overhead_power_line ? "Yes" : "No" %>
+  </p>
+
+  <p>
+    <strong>Safety-critical persons:</strong>
+    <%= dwelling.has_safety_critical_persons ? "Yes" : "No" %>
+  </p>
+
+  <p>
+    <strong>Sensitive equipment:</strong>
+    <%= dwelling.has_sensitive_equipment ? "Yes" : "No" %>
+  </p>
 </div>
