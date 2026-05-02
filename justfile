@@ -7,7 +7,7 @@ default:
 # Install dependencies and setup database
 setup:
     bundle install
-    rails db:create db:migrate db:seed
+    bundle exec rails db:create db:migrate db:seed
 
 # Start development server
 dev:
@@ -15,11 +15,11 @@ dev:
 
 # Run compliance tests (used by CI)
 test:
-    ruby test_compliance_manual.rb
+    bundle exec ruby test_compliance_manual.rb
 
 # Run full test suite
 test-full:
-    rails test test/services/compliance_engine_test.rb
+    bundle exec rails test test/services/compliance_engine_test.rb
 
 # Run security scan
 security:
@@ -35,15 +35,15 @@ lint-fix:
 
 # Run migrations
 migrate:
-    rails db:migrate
+    bundle exec rails db:migrate
 
 # Reset database
 db-reset:
-    rails db:reset
+    bundle exec rails db:reset
 
 # Open Rails console
 console:
-    rails console
+    bundle exec rails console
 
 # Sync production database to local development
 # Usage: just sync-db server0@server0:~/configuration/electricplan
