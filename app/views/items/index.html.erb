@@ -12,6 +12,56 @@
   <%= link_to "New Item", new_item_path, class: "button-primary" %>
 </div>
 
+<%
+  # Build cascading filter options
+  panels = ElectricalPanel.includes(room: :floor)
+  panels = panels.where(dwelling_id: params[:dwelling_id]) if params[:dwelling_id].present?
+
+  rcds = ResidualCurrentDevice.all
+  rcds = rcds.where(electrical_panel_id: params[:electrical_panel_id]) if params[:electrical_panel_id].present?
+  rcds = rcds.joins(:electrical_panel).where(electrical_panels: { dwelling_id: params[:dwelling_id] }) if params[:dwelling_id].present? && params[:electrical_panel_id].blank?
+
+  breakers = Breaker.all
+  breakers = breakers.where(residual_current_device_id: params[:residual_current_device_id]) if params[:residual_current_device_id].present?
+  breakers = breakers.joins(:residual_current_device).where(residual_current_devices: { electrical_panel_id: params[:electrical_panel_id] }) if params[:electrical_panel_id].present? && params[:residual_current_device_id].blank?
+  breakers = breakers.joins(residual_current_device: :electrical_panel).where(electrical_panels: { dwelling_id: params[:dwelling_id] }) if params[:dwelling_id].present? && params[:electrical_panel_id].blank? && params[:residual_current_device_id].blank?
+%>
+
+<div class="filters" style="margin-bottom: 1.5rem; padding: 1rem; background: #f5f5f5; border-radius: 4px;">
+  <%= form_with url: items_path, method: :get, local: true, style: "display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;" do |f| %>
+    <div class="form-field" style="margin: 0; flex: 1; min-width: 150px;">
+      <%= f.label :dwelling_id, "Dwelling", style: "display: block; margin-bottom: 0.25rem; font-size: 0.875rem;" %>
+      <%= f.collection_select :dwelling_id, Dwelling.all, :id, :name, { include_blank: "All Dwellings", selected: params[:dwelling_id] }, { class: "form-input", style: "width: 100%;", onchange: "this.form.submit();" } %>
+    </div>
+
+    <div class="form-field" style="margin: 0; flex: 1; min-width: 150px;">
+      <%= f.label :electrical_panel_id, "Electrical Panel", style: "display: block; margin-bottom: 0.25rem; font-size: 0.875rem;" %>
+      <%= f.collection_select :electrical_panel_id, panels, :id, ->(panel) { "#{panel.name} (#{panel.room.floor.name} - #{panel.room.name})" }, { include_blank: "All Panels", selected: params[:electrical_panel_id] }, { class: "form-input", style: "width: 100%;", onchange: "this.form.submit();" } %>
+    </div>
+
+    <div class="form-field" style="margin: 0; flex: 1; min-width: 150px;">
+      <%= f.label :residual_current_device_id, "RCD", style: "display: block; margin-bottom: 0.25rem; font-size: 0.875rem;" %>
+      <%= f.collection_select :residual_current_device_id, rcds, :id, :name, { include_blank: "All RCDs", selected: params[:residual_current_device_id] }, { class: "form-input", style: "width: 100%;", onchange: "this.form.submit();" } %>
+    </div>
+
+    <div class="form-field" style="margin: 0; flex: 1; min-width: 150px;">
+      <%= f.label :breaker_id, "Breaker", style: "display: block; margin-bottom: 0.25rem; font-size: 0.875rem;" %>
+      <%= f.collection_select :breaker_id, breakers, :id, :name, { include_blank: "All Breakers", selected: params[:breaker_id] }, { class: "form-input", style: "width: 100%;", onchange: "this.form.submit();" } %>
+    </div>
+
+    <div class="form-field" style="margin: 0; flex: 1; min-width: 150px;">
+      <%= f.label :room_id, "Room", style: "display: block; margin-bottom: 0.25rem; font-size: 0.875rem;" %>
+      <%= f.collection_select :room_id, Room.includes(:floor).all, :id, ->(room) { "#{room.floor.name} - #{room.name}" }, { include_blank: "All Rooms", selected: params[:room_id] }, { class: "form-input", style: "width: 100%;", onchange: "this.form.submit();" } %>
+    </div>
+
+    <% if params[:dwelling_id].present? || params[:electrical_panel_id].present? || params[:residual_current_device_id].present? || params[:breaker_id].present? || params[:room_id].present? %>
+      <div style="margin: 0;">
+        <%= link_to "Clear Filters", items_path, class: "button-secondary button-small" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
 <% if @new_item %>
   <%= form_with(model: @new_item, html: { id: dom_id(@new_item, :form) }) do |form| %>
   <% end %>
