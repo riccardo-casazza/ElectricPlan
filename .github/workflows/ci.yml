@@ -6,8 +6,41 @@ on:
   pull_request:
     branches: [ main ]
 
+# Cancel in-progress runs when a new commit is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # Detect which files changed to determine which jobs to run
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      ruby: ${{ steps.filter.outputs.ruby }}
+      docker: ${{ steps.filter.outputs.docker }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ruby:
+              - '**/*.rb'
+              - '**/*.erb'
+              - '**/*.yml'
+              - 'Gemfile*'
+              - 'config/**'
+              - 'db/**'
+              - 'test/**'
+              - 'justfile'
+            docker:
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - '.dockerignore'
+
   test:
+    needs: changes
+    if: ${{ needs.changes.outputs.ruby == 'true' }}
     runs-on: ubuntu-latest
 
     env:
@@ -41,6 +74,8 @@ jobs:
         run: just security
 
   lint:
+    needs: changes
+    if: ${{ needs.changes.outputs.ruby == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -60,6 +95,8 @@ jobs:
         run: just lint
 
   build:
+    needs: changes
+    if: ${{ needs.changes.outputs.docker == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
