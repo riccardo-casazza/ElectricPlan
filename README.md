@@ -3,99 +3,86 @@
 ![CI Status](https://github.com/YOUR_USERNAME/ElectricPlan/workflows/CI/badge.svg)
 ![Deploy Status](https://github.com/YOUR_USERNAME/ElectricPlan/workflows/Build%20and%20Push%20Docker%20Image/badge.svg)
 
-A Ruby on Rails application for electrical installation compliance management, configured for Docker deployment.
+A Ruby on Rails application for electrical installation compliance management against the French NF C 15-100 standard.
 
 ## Requirements
 
-- Docker
-- Docker Compose
+- Ruby 3.3.6
+- [just](https://github.com/casey/just) command runner
+- SQLite3
 
-## Getting Started with Docker
+## Quick Start
 
-### Development Setup
-
-1. Clone the repository
 ```bash
-git clone <repository-url>
-cd ElectricPlan
+# Install just (macOS)
+brew install just
+
+# Install just (Linux)
+curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+
+# Setup the project
+just setup
+
+# Start development server
+just dev
 ```
 
-2. Build and start the containers
+## Available Commands
+
+Run `just` to see all available commands:
+
 ```bash
-docker-compose up --build
+just              # Show available commands
+just setup        # Install dependencies and setup database
+just dev          # Start development server
+just test         # Run compliance tests
+just test-full    # Run full test suite
+just security     # Run Brakeman security scan
+just lint         # Run RuboCop linter
+just lint-fix     # Auto-fix lint issues
+just migrate      # Run database migrations
+just db-reset     # Reset database
+just console      # Open Rails console
+just sync-db      # Sync production database to local
 ```
 
-3. Create the database
+## Development Workflow
+
+### Running Tests
+
 ```bash
-docker-compose exec web rails db:create
-docker-compose exec web rails db:migrate
+just test         # Run compliance tests (CI uses this)
+just test-full    # Run full Rails test suite
 ```
 
-4. Access the application
-Open your browser and navigate to `http://localhost:3000`
+### Code Quality
 
-### Common Docker Commands
-
-**Start the application**
 ```bash
-docker-compose up
+just lint         # Check code style
+just lint-fix     # Auto-fix code style issues
+just security     # Run security scan
 ```
 
-**Start in detached mode**
+### Database Operations
+
 ```bash
-docker-compose up -d
+just setup        # Initial database setup
+just migrate      # Run pending migrations
+just db-reset     # Reset and reseed database
+just console      # Open Rails console
 ```
 
-**Stop the application**
+### Syncing Production Database
+
 ```bash
-docker-compose down
+# With custom remote path
+just sync-db "server0@server0:~/configuration/electricplan"
+
+# With default server path
+just sync-db-default
 ```
 
-**View logs**
-```bash
-docker-compose logs -f web
-```
-
-**Access Rails console**
-```bash
-docker-compose exec web rails console
-```
-
-**Run migrations**
-```bash
-docker-compose exec web rails db:migrate
-```
-
-**Run tests**
-```bash
-# Compliance tests
-docker-compose exec web ruby test_compliance_manual.rb
-
-# Full test suite (when Rails/Minitest issue is fixed)
-docker-compose exec web rails test
-```
-
-**Install new gems**
-```bash
-docker-compose exec web bundle install
-docker-compose restart web
-```
-
-**Reset database**
-```bash
-docker-compose exec web rails db:reset
-```
-
-## Database Configuration
-
-- **All Environments**: SQLite3 (file-based database)
-- **Development**: `storage/development.sqlite3`
-- **Test**: `storage/test.sqlite3`
-- **Production**: `storage/production.sqlite3`
-
-See [CLAUDE.md](CLAUDE.md) for detailed database architecture and deployment instructions.
-
-## Production Deployment
+## Docker Deployment
 
 ### Building for Production
 
@@ -114,44 +101,15 @@ docker run -d -p 80:80 \
 
 **Note:** Use a volume to persist the SQLite database across container restarts.
 
-## Ruby Version
+## Database
 
-- Ruby 3.3.6
-- Rails 8.0.0
-
-## System Dependencies
-
-All dependencies are managed through Docker containers.
-
-## Testing
-
-ElectricPlan includes comprehensive compliance testing for electrical installation rules.
-
-### Running Tests
-
-```bash
-# Run compliance tests (recommended)
-ruby test_compliance_manual.rb
-
-# Run security scan
-bundle exec brakeman -q -w2
-
-# Run code linter
-bundle exec rubocop
-```
-
-See [TESTING.md](TESTING.md) for detailed testing documentation.
-
-### Test Coverage
-
-- **33 compliance rules** covering breakers, items, RCDs, and system-wide requirements
-- Automated CI pipeline with GitHub Actions
-- Security scanning with Brakeman
-- Code quality checks with RuboCop
+- **All Environments**: SQLite3 (file-based)
+- **Development**: `storage/development.sqlite3`
+- **Test**: `storage/test.sqlite3`
+- **Production**: `storage/production.sqlite3`
 
 ## Documentation
 
-- **[CLAUDE.md](CLAUDE.md)** - Project overview and deployment guide
+- **[CLAUDE.md](CLAUDE.md)** - Domain model and compliance engine architecture
 - **[TESTING.md](TESTING.md)** - Testing guide and CI configuration
 - **[test/services/README.md](test/services/README.md)** - Compliance test documentation
-- **[.github/workflows/README.md](.github/workflows/README.md)** - GitHub Actions workflow documentation
