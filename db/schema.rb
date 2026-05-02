@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_17_171238) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_02_102032) do
   create_table "breakers", force: :cascade do |t|
     t.integer "residual_current_device_id", null: false
     t.integer "position"
@@ -75,6 +75,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_171238) do
     t.datetime "updated_at", null: false
     t.integer "input_cable_id"
     t.integer "power_watts"
+    t.boolean "implemented", default: true, null: false
     t.index ["breaker_id"], name: "index_items_on_breaker_id"
     t.index ["input_cable_id"], name: "index_items_on_input_cable_id"
     t.index ["item_type_id"], name: "index_items_on_item_type_id"

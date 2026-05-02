@@ -45,6 +45,11 @@
     <small style="color: #666;">Required for convectors, water heaters, and A/C units</small>
   </div>
 
+  <div class="form-field">
+    <%= form.label :implemented, "Implemented" %>
+    <%= form.check_box :implemented, class: "form-checkbox" %>
+  </div>
+
   <div class="form-actions">
     <%= form.submit class: "button-primary" %>
     <%= link_to "Cancel", items_path, class: "button-secondary" %>
