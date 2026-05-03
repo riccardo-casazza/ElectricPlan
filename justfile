@@ -54,6 +54,9 @@ sync-db remote_path:
     scp {{remote_path}}/production_cable.sqlite3 storage/development_cable.sqlite3
     @echo "Database synced from production. Run 'just dev' to start server."
 
-# Sync production database (with default server path)
-sync-db-default:
-    just sync-db "server0@server0:~/configuration/electricplan"
+# Run CI pipeline in Docker (no local Ruby needed)
+ci:
+    docker build -t electricplan:ci --target build .
+    docker run --rm electricplan:ci bundle exec ruby test_compliance_manual.rb
+    docker run --rm electricplan:ci bundle exec brakeman -q -w2
+    docker run --rm electricplan:ci bundle exec rubocop

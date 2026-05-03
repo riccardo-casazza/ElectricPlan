@@ -1,0 +1,209 @@
+<p><%= link_to "Back to Dwelling", dwelling_path(@dwelling) %></p>
+
+<h1>Installation Graph: <%= @dwelling.name %></h1>
+
+<div class="graph-controls">
+  <button onclick="zoomIn()">+ Zoom In</button>
+  <button onclick="zoomOut()">- Zoom Out</button>
+  <button onclick="resetZoom()">Reset</button>
+  <span class="zoom-hint">Scroll to zoom, drag to pan</span>
+</div>
+
+<div class="graph-container" id="graphContainer">
+  <div class="mermaid" id="mermaidGraph">
+flowchart LR
+  <%= "D#{@dwelling.id}[\"#{@dwelling.name}\"]" %>
+  <% @dwelling.electrical_panels.each do |panel| %>
+    <%= "P#{panel.id}[\"#{panel.name}\"]" %>
+    <%= "D#{@dwelling.id} --> P#{panel.id}" %>
+    <% panel.residual_current_devices.each do |rcd| %>
+      <%= "R#{rcd.id}[\"#{rcd.name}\"]" %>
+      <%= "P#{panel.id} --> R#{rcd.id}" %>
+      <% rcd.breakers.each do |breaker| %>
+        <%= "B#{breaker.id}[\"#{breaker.name} #{breaker.output_max_current}A\"]" %>
+        <%= "R#{rcd.id} --> B#{breaker.id}" %>
+        <% breaker.items.each do |item| %>
+          <%= "I#{item.id}((\"#{item.name}\"))" %>
+          <%= "B#{breaker.id} --> I#{item.id}" %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  classDef dwelling fill:#4a90d9,stroke:#2c5282,color:#fff
+  classDef panel fill:#48bb78,stroke:#276749,color:#fff
+  classDef rcd fill:#ed8936,stroke:#c05621,color:#fff
+  classDef breaker fill:#9f7aea,stroke:#6b46c1,color:#fff
+  classDef item fill:#fc8181,stroke:#c53030,color:#fff
+
+  class <%= "D#{@dwelling.id}" %> dwelling
+  <% @dwelling.electrical_panels.each do |panel| %>
+  class <%= "P#{panel.id}" %> panel
+  <% panel.residual_current_devices.each do |rcd| %>
+  class <%= "R#{rcd.id}" %> rcd
+  <% rcd.breakers.each do |breaker| %>
+  class <%= "B#{breaker.id}" %> breaker
+  <% breaker.items.each do |item| %>
+  class <%= "I#{item.id}" %> item
+  <% end %>
+  <% end %>
+  <% end %>
+  <% end %>
+  </div>
+</div>
+
+<div class="graph-legend">
+  <h3>Legend</h3>
+  <span class="legend-item dwelling">Dwelling</span>
+  <span class="legend-item panel">Electrical Panel</span>
+  <span class="legend-item rcd">RCD</span>
+  <span class="legend-item breaker">Breaker</span>
+  <span class="legend-item item">Item</span>
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    flowchart: {
+      nodeSpacing: 30,
+      rankSpacing: 50,
+      curve: 'basis'
+    }
+  });
+</script>
+
+<script>
+  let scale = 1;
+  let translateX = 0;
+  let translateY = 0;
+  let isDragging = false;
+  let startX, startY;
+
+  const container = document.getElementById('graphContainer');
+  const graph = document.getElementById('mermaidGraph');
+
+  function updateTransform() {
+    graph.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+  }
+
+  window.zoomIn = function() {
+    scale = Math.min(scale * 1.2, 3);
+    updateTransform();
+  }
+
+  window.zoomOut = function() {
+    scale = Math.max(scale / 1.2, 0.2);
+    updateTransform();
+  }
+
+  window.resetZoom = function() {
+    scale = 1;
+    translateX = 0;
+    translateY = 0;
+    updateTransform();
+  }
+
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale = Math.max(0.2, Math.min(3, scale * delta));
+    updateTransform();
+  });
+
+  container.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.clientX - translateX;
+    startY = e.clientY - translateY;
+    container.style.cursor = 'grabbing';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    translateX = e.clientX - startX;
+    translateY = e.clientY - startY;
+    updateTransform();
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    container.style.cursor = 'grab';
+  });
+</script>
+
+<style>
+  .graph-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .graph-controls button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .graph-controls button:hover {
+    background: #f0f0f0;
+  }
+
+  .zoom-hint {
+    margin-left: 1rem;
+    color: #666;
+    font-size: 0.875rem;
+  }
+
+  .graph-container {
+    width: 100%;
+    height: 70vh;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: grab;
+    position: relative;
+  }
+
+  .mermaid {
+    transform-origin: center center;
+    transition: transform 0.1s ease-out;
+    padding: 2rem;
+    display: inline-block;
+    min-width: 100%;
+    min-height: 100%;
+  }
+
+  .graph-legend {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 0.5rem;
+  }
+
+  .graph-legend h3 {
+    margin: 0;
+    margin-right: 1rem;
+  }
+
+  .legend-item {
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: #fff;
+  }
+
+  .legend-item.dwelling { background: #4a90d9; }
+  .legend-item.panel { background: #48bb78; }
+  .legend-item.rcd { background: #ed8936; }
+  .legend-item.breaker { background: #9f7aea; }
+  .legend-item.item { background: #fc8181; }
+</style>

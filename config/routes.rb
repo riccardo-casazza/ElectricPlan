@@ -1,5 +1,9 @@
 Rails.application.routes.draw do
-  resources :dwellings
+  resources :dwellings do
+    member do
+      get :graph, to: "graphs#show"
+    end
+  end
 
   # Location API for cascading dropdowns
   get "locations/regions", to: "locations#regions"

@@ -32,6 +32,7 @@
           <% compliance_class = has_any_errors ? "button-small button-danger" : "button-small button-success" %>
           <% compliance_icon = has_any_errors ? "⚠" : "✓" %>
           <%= link_to compliance_icon, dwelling, class: compliance_class, title: has_any_errors ? "Has compliance issues" : "Compliant" %>
+          <%= link_to "Graph", graph_dwelling_path(dwelling), class: "button-small button-secondary" %>
           <%= link_to "Edit", edit_dwelling_path(dwelling), class: "button-small button-secondary" %>
           <%= button_to "Delete", dwelling, method: :delete, class: "button-small button-danger", form: { data: { turbo_confirm: "Are you sure you want to delete this dwelling and all its electrical panels?" } } %>
         </td>
