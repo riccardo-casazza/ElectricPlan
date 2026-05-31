@@ -1,727 +1,249 @@
 require "ostruct"
+require_relative "compliance/item_types"
+require_relative "compliance/base_validator"
+require_relative "compliance/validators"
 
 class ComplianceEngine
+  include Compliance
+
   def initialize
     @rules = load_rules
   end
 
-  # Check violations for a specific resource
-  # Returns an array of ComplianceViolation objects
   def check_resource(resource)
-    violations = []
-    resource_type = resource.class.name
-
-    # Get rules applicable to this resource type
-    applicable_rules = rules_for_type(resource_type)
-
-    applicable_rules.each do |rule_code, rule_config|
-      # Check if the rule's condition is met
+    rules_for_type(resource.class.name).filter_map do |rule_code, rule_config|
       next unless matches_condition?(resource, rule_config["condition"])
-
-      # Validate the rule
-      unless passes_validation?(resource, rule_config["validation"])
-        violations << create_violation(rule_code, rule_config, resource)
-      end
+      create_violation(rule_code, rule_config, resource) unless passes_validation?(resource, rule_config["validation"])
     end
-
-    violations
   end
 
-  # Check system-wide violations (not tied to specific resource)
-  # Returns an array of ComplianceViolation objects
   def check_system
-    violations = []
-    system_rules = @rules["system_rules"] || {}
-
-    system_rules.each do |rule_code, rule_config|
-      unless passes_system_validation?(rule_config["validation"])
-        violations << create_system_violation(rule_code, rule_config)
-      end
+    (@rules["system_rules"] || {}).filter_map do |rule_code, rule_config|
+      create_system_violation(rule_code, rule_config) unless passes_system_validation?(rule_config["validation"])
     end
-
-    violations
   end
 
-  # Check dwelling-level violations for a specific dwelling
-  # Returns an array of ComplianceViolation objects
   def check_dwelling(dwelling)
-    violations = []
-    dwelling_rules = rules_for_type("Dwelling")
-
-    dwelling_rules.each do |rule_code, rule_config|
-      unless passes_dwelling_validation?(dwelling, rule_config["validation"])
-        violations << create_dwelling_violation(rule_code, rule_config, dwelling)
-      end
+    rules_for_type("Dwelling").filter_map do |rule_code, rule_config|
+      create_dwelling_violation(rule_code, rule_config, dwelling) unless passes_dwelling_validation?(dwelling, rule_config["validation"])
     end
-
-    violations
   end
 
-  # Check upstream violations (violations that would affect this resource)
-  # For example, if a Breaker has too many items, all those Items are affected
   def check_upstream_violations(resource)
     case resource.class.name
-    when "Item"
-      # Check if parent Breaker has violations
-      resource.breaker&.compliance_violations || []
-    when "Breaker"
-      # Check if parent RCD has violations
-      resource.residual_current_device&.compliance_violations || []
-    else
-      []
+    when "Item" then resource.breaker&.compliance_violations || []
+    when "Breaker" then resource.residual_current_device&.compliance_violations || []
+    else []
     end
   end
 
-  # Check downstream violations (violations in child resources caused by this resource)
-  # For example, if an RCD's type is wrong, all connected Items might have violations
   def check_downstream_violations(resource)
-    violations = []
-
     case resource.class.name
     when "ElectricalPanel"
-      # Check all RCDs under this panel (including their downstream violations)
-      resource.residual_current_devices.each do |rcd|
-        violations.concat(rcd.compliance_violations)
-        violations.concat(rcd.downstream_violations)
-      end
+      resource.residual_current_devices.flat_map { |rcd| rcd.compliance_violations + rcd.downstream_violations }
     when "ResidualCurrentDevice"
-      # Check all breakers under this RCD (including their downstream violations)
-      resource.breakers.each do |breaker|
-        violations.concat(breaker.compliance_violations)
-        violations.concat(breaker.downstream_violations)
-      end
+      resource.breakers.flat_map { |b| b.compliance_violations + b.downstream_violations }
     when "Breaker"
-      # Check all items on this breaker
-      resource.items.each do |item|
-        violations.concat(item.compliance_violations)
-      end
+      resource.items.flat_map(&:compliance_violations)
+    else []
     end
-
-    violations
   end
 
   private
 
   def load_rules
-    file_path = Rails.root.join("config", "compliance_rules.yml")
-    YAML.load_file(file_path, permitted_classes: [ Symbol ])
-  rescue => e
+    YAML.load_file(Rails.root.join("config", "compliance_rules.yml"), permitted_classes: [Symbol])
+  rescue StandardError => e
     Rails.logger.error "Failed to load compliance rules: #{e.message}"
     {}
   end
 
-  def rules_for_type(resource_type)
-    all_rules = {}
-
-    # Collect all rules that apply to this resource type
-    @rules.each do |category_key, category_rules|
-      next unless category_rules.is_a?(Hash)
-
-      category_rules.each do |rule_code, rule_config|
-        if rule_config["applies_to"] == resource_type
-          all_rules[rule_code] = rule_config
-        end
-      end
+  def rules_for_type(type)
+    @rules.each_with_object({}) do |(_, rules), acc|
+      next unless rules.is_a?(Hash)
+      rules.each { |code, config| acc[code] = config if config["applies_to"] == type }
     end
-
-    all_rules
   end
+
+  # ========================================
+  # CONDITIONS
+  # ========================================
 
   def matches_condition?(resource, condition)
     return true if condition.nil?
-
-    condition_type = condition["type"]
-
-    case condition_type
-    when "has_light_items"
-      # Check if resource has any light items
-      return false unless resource.respond_to?(:items)
-      resource.items.joins(:item_type).where(item_types: { name: "light" }).exists?
-
-    when "has_socket_items"
-      # Check if resource has any socket items
-      return false unless resource.respond_to?(:items)
-      resource.items.joins(:item_type).where(item_types: { name: "socket" }).exists?
-
-    when "socket_breaker_16a"
-      # Check if this is a 16A breaker with sockets
-      return false unless resource.respond_to?(:items) && resource.respond_to?(:output_max_current)
-      has_sockets = resource.items.joins(:item_type).where(item_types: { name: "socket" }).exists?
-      has_sockets && resource.output_max_current == 16
-
-    when "socket_breaker_20a"
-      # Check if this is a 20A breaker with sockets
-      return false unless resource.respond_to?(:items) && resource.respond_to?(:output_max_current)
-      has_sockets = resource.items.joins(:item_type).where(item_types: { name: "socket" }).exists?
-      has_sockets && resource.output_max_current == 20
-
-    when "item_type_equals"
-      # Check if item's type matches the specified value
-      return false unless resource.respond_to?(:item_type)
-      resource.item_type.name.downcase == condition["value"].to_s.downcase
-
+    case condition["type"]
+    when "has_light_items" then has_items?(resource, ITEM_TYPES[:light])
+    when "has_socket_items" then has_items?(resource, ITEM_TYPES[:socket])
+    when "has_shutter_items" then has_items?(resource, ITEM_TYPES[:shutter])
+    when "has_convector_items" then has_items?(resource, ITEM_TYPES[:convector])
+    when "has_cooktop_items" then has_items?(resource, ITEM_TYPES[:cooktop])
+    when "has_ev_charger_items" then has_items?(resource, ITEM_TYPES[:ev_charger])
+    when "has_water_heater_items" then has_items?(resource, ITEM_TYPES[:water_heater])
+    when "has_freezer_items" then has_items?(resource, ITEM_TYPES[:freezer])
+    when "has_high_power_appliance_items" then has_any_items?(resource, HIGH_POWER_APPLIANCES)
+    when "socket_breaker_16a" then has_items?(resource, ITEM_TYPES[:socket]) && resource.output_max_current == 16
+    when "socket_breaker_20a" then has_items?(resource, ITEM_TYPES[:socket]) && resource.output_max_current == 20
     when "kitchen_socket_breaker"
-      # Check if this is a socket breaker serving a kitchen
-      return false unless resource.respond_to?(:items)
-      has_sockets = resource.items.joins(:item_type).where(item_types: { name: "socket" }).exists?
-      return false unless has_sockets
-
-      # Check if any of the items are in a kitchen
-      resource.items.joins(:room).where(rooms: { is_kitchen: true }).exists?
-
-    when "has_shutter_items"
-      # Check if resource has any roller shutter items
-      return false unless resource.respond_to?(:items)
-      resource.items.joins(:item_type).where(item_types: { name: "roller shutters" }).exists?
-
-    when "has_convector_items"
-      # Check if resource has any convector items
-      return false unless resource.respond_to?(:items)
-      resource.items.joins(:item_type).where(item_types: { name: "convector" }).exists?
-
-    when "has_high_power_appliance_items"
-      # Check if resource has dishwasher, washing machine, dryer, or oven items
-      return false unless resource.respond_to?(:items)
-      appliance_types = [ "dishwasher", "washing machine", "dryer", "oven" ]
-      resource.items.joins(:item_type).where("LOWER(item_types.name) IN (?)", appliance_types).exists?
-
-    when "has_cooktop_items"
-      # Check if resource has any cooktop items
-      return false unless resource.respond_to?(:items)
-      resource.items.joins(:item_type).where(item_types: { name: "cooktop" }).exists?
-
-    else
-      true
+      has_items?(resource, ITEM_TYPES[:socket]) && resource.items.joins(:room).where(rooms: { is_kitchen: true }).exists?
+    when "item_type_equals"
+      resource.respond_to?(:item_type) && resource.item_type.name.downcase == condition["value"].to_s.downcase
+    when "room_type_equals"
+      resource.respond_to?(:room_type) && resource.room_type.to_s.downcase == condition["value"].to_s.downcase
+    when "room_larger_than"
+      resource.respond_to?(:surface_area) && resource.surface_area &&
+        !%w[living_room bedroom kitchen].include?(resource.room_type.to_s.downcase) &&
+        resource.surface_area.to_f > condition["min_area"].to_f
+    else true
     end
   end
 
+  def has_items?(resource, type)
+    resource.respond_to?(:items) && resource.items.joins(:item_type).where("LOWER(item_types.name) = ?", type.downcase).exists?
+  end
+
+  def has_any_items?(resource, types)
+    resource.respond_to?(:items) && resource.items.joins(:item_type).where("LOWER(item_types.name) IN (?)", types.map(&:downcase)).exists?
+  end
+
+  # ========================================
+  # VALIDATION
+  # ========================================
+
   def passes_validation?(resource, validation)
     return true if validation.nil?
-
-    validation_type = validation["type"]
-
-    case validation_type
-    when "exclusive_type"
-      validate_exclusive_type(resource, validation)
-    when "max_count"
-      validate_max_count(resource, validation)
-    when "max_attribute"
-      validate_max_attribute(resource, validation)
-    when "association_attribute"
-      validate_association_attribute(resource, validation)
-    when "association_count"
-      validate_association_count(resource, validation)
-    when "load_calculation"
-      validate_load_calculation(resource, validation)
-    when "attribute_in_list"
-      validate_attribute_in_list(resource, validation)
-    when "min_cable_section"
-      validate_min_cable_section(resource, validation)
-    when "max_total_power"
-      validate_max_total_power(resource, validation)
-    when "breaker_exclusive_for_type"
-      validate_breaker_exclusive_for_type(resource, validation)
-    else
-      true
-    end
+    validator = Validators.for(validation["type"], resource, validation)
+    validator ? validator.valid? : true
   end
 
   def passes_system_validation?(validation)
     return true if validation.nil?
-
-    validation_type = validation["type"]
-
-    case validation_type
+    case validation["type"]
     when "min_light_breakers"
-      min_value = validation["min_value"] || 2
-      light_breakers_count = Breaker.joins(items: :item_type)
-                                     .where(item_types: { name: "light" })
-                                     .distinct
-                                     .count
-      light_breakers_count >= min_value
-
+      breakers_with_type(ITEM_TYPES[:light]) >= (validation["min_value"] || 2)
     when "min_shutter_breakers"
-      min_value = validation["min_value"] || 1
-      shutter_breakers_count = Breaker.joins(items: :item_type)
-                                       .where(item_types: { name: "roller shutters" })
-                                       .distinct
-                                       .count
-      shutter_breakers_count >= min_value
-
+      breakers_with_type(ITEM_TYPES[:shutter]) >= (validation["min_value"] || 1)
     when "min_appliance_circuits"
-      min_value = validation["min_value"] || 3
-      appliance_types = validation["appliance_types"] || [ "dishwasher", "washing machine", "dryer", "oven" ]
-
-      appliance_breakers_count = Breaker.joins(items: :item_type)
-                                         .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
-                                         .distinct
-                                         .count
-      appliance_breakers_count >= min_value
-
-    else
-      true
+      breakers_with_any_type(validation["appliance_types"] || HIGH_POWER_APPLIANCES) >= (validation["min_value"] || 3)
+    else true
     end
   end
 
   def passes_dwelling_validation?(dwelling, validation)
     return true if validation.nil?
-
-    validation_type = validation["type"]
-
-    case validation_type
+    case validation["type"]
     when "min_shutter_breakers"
-      min_value = validation["min_value"] || 1
-      shutter_breakers_count = Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
-                                       .where(dwellings: { id: dwelling.id })
-                                       .where(item_types: { name: "roller shutters" })
-                                       .distinct
-                                       .count
-      shutter_breakers_count >= min_value
-
+      dwelling_breakers_with_type(dwelling, ITEM_TYPES[:shutter]) >= (validation["min_value"] || 1)
     when "min_appliance_circuits"
-      min_value = validation["min_value"] || 3
-      appliance_types = validation["appliance_types"] || [ "dishwasher", "washing machine", "dryer", "oven" ]
-
-      appliance_breakers_count = Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
-                                         .where(dwellings: { id: dwelling.id })
-                                         .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
-                                         .distinct
-                                         .count
-      appliance_breakers_count >= min_value
-
+      dwelling_breakers_with_any_type(dwelling, validation["appliance_types"] || HIGH_POWER_APPLIANCES) >= (validation["min_value"] || 3)
     when "surge_protection_required"
-      # If surge protection is not required, validation passes
-      return true unless dwelling.surge_protection_required?
-
-      # If required, check if it's installed
-      dwelling.has_surge_protection?
-
-    else
-      true
+      !dwelling.surge_protection_required? || dwelling.has_surge_protection?
+    when "min_rcd_count"
+      dwelling_rcds(dwelling) >= (validation["min_value"] || 2)
+    when "min_rcd_type_count"
+      dwelling_rcds_of_type(dwelling, validation["rcd_type"]) >= (validation["min_value"] || 1)
+    else true
     end
   end
 
-  def validate_exclusive_type(resource, validation)
-    required_type = validation["required_type"]
-    return true unless resource.respond_to?(:items)
+  # ========================================
+  # QUERY HELPERS
+  # ========================================
 
-    # All items must be of the required type
-    non_matching_items = resource.items.joins(:item_type).where.not(item_types: { name: required_type })
-    non_matching_items.empty?
+  def breakers_with_type(type)
+    Breaker.joins(items: :item_type).where("LOWER(item_types.name) = ?", type.downcase).distinct.count
   end
 
-  def validate_max_count(resource, validation)
-    attribute = validation["attribute"]
-    max_value = validation["max_value"]
-
-    # Get the collection (e.g., light_items, socket_items)
-    items = case attribute
-    when "light_items"
-      resource.items.joins(:item_type).where(item_types: { name: "light" })
-    when "socket_items"
-      resource.items.joins(:item_type).where(item_types: { name: "socket" })
-    else
-      return true
-    end
-
-    items.count <= max_value
+  def breakers_with_any_type(types)
+    Breaker.joins(items: :item_type).where("LOWER(item_types.name) IN (?)", types.map(&:downcase)).distinct.count
   end
 
-  def validate_max_attribute(resource, validation)
-    attribute = validation["attribute"]
-    max_value = validation["max_value"]
-
-    actual_value = resource.send(attribute)
-    actual_value <= max_value
-  rescue
-    true
+  def dwelling_breakers_with_type(dwelling, type)
+    Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
+           .where(dwellings: { id: dwelling.id }).where("LOWER(item_types.name) = ?", type.downcase).distinct.count
   end
 
-  def validate_association_attribute(resource, validation)
-    path = validation["path"]
-    expected_value = validation["must_equal"]
-
-    actual_value = get_nested_value(resource, path)
-    return true if actual_value.nil?
-
-    actual_value.to_s.downcase == expected_value.to_s.downcase
+  def dwelling_breakers_with_any_type(dwelling, types)
+    Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
+           .where(dwellings: { id: dwelling.id }).where("LOWER(item_types.name) IN (?)", types.map(&:downcase)).distinct.count
   end
 
-  def validate_association_count(resource, validation)
-    association = validation["association"]
-    max_count = validation["max_count"]
-
-    return true unless resource.respond_to?(association)
-
-    actual_count = resource.send(association).count
-    actual_count <= max_count
+  def dwelling_rcds(dwelling)
+    ResidualCurrentDevice.joins(electrical_panel: :dwelling).where(dwellings: { id: dwelling.id }).count
   end
 
-  def validate_load_calculation(resource, validation)
-    return true unless resource.is_a?(ResidualCurrentDevice)
-
-    full_load_types = validation["full_load_types"] || []
-    breakers = resource.breakers.includes(items: :item_type)
-
-    full_load_sum = 0
-    partial_load_sum = 0
-
-    breakers.each do |breaker|
-      next if breaker.items.empty?
-
-      has_full_load_item = breaker.items.any? do |item|
-        full_load_types.include?(item.item_type.name.downcase)
-      end
-
-      if has_full_load_item
-        full_load_sum += breaker.output_max_current
-      else
-        partial_load_sum += breaker.output_max_current
-      end
-    end
-
-    total_required = full_load_sum + (partial_load_sum * 0.5)
-    resource.output_max_current >= total_required
+  def dwelling_rcds_of_type(dwelling, type)
+    ResidualCurrentDevice.joins(electrical_panel: :dwelling, residual_current_device_type: {})
+                         .where(dwellings: { id: dwelling.id }, residual_current_device_types: { name: type }).count
   end
 
-  def validate_attribute_in_list(resource, validation)
-    attribute = validation["attribute"]
-    allowed_values = validation["allowed_values"]
-
-    actual_value = resource.send(attribute)
-    allowed_values.include?(actual_value)
-  rescue
-    true
-  end
-
-  def validate_min_cable_section(resource, validation)
-    path = validation["path"]
-    min_section = validation["min_section"]
-
-    actual_value = get_nested_value(resource, path)
-    return true if actual_value.nil?
-
-    # Convert to float for comparison (handles both numeric and string inputs)
-    min_value = min_section.to_f
-    actual_float = actual_value.to_f
-
-    return true if min_value.zero? || actual_float.zero?
-
-    # Actual cable section must be >= minimum required
-    actual_float >= min_value
-  end
-
-  def validate_max_total_power(resource, validation)
-    item_type_name = validation["item_type"]
-    max_power = validation["max_power"]
-
-    return true unless resource.respond_to?(:items)
-
-    # Calculate total power for items of the specified type
-    total_power = resource.items.joins(:item_type)
-                          .where("LOWER(item_types.name) = ?", item_type_name.downcase)
-                          .sum(:power_watts)
-
-    total_power <= max_power
-  end
-
-  def validate_breaker_exclusive_for_type(resource, validation)
-    item_type_names = validation["item_types"]
-
-    return true unless resource.respond_to?(:items)
-
-    # Check if breaker has items of the specified types
-    has_specified_types = resource.items.joins(:item_type)
-                                  .where("LOWER(item_types.name) IN (?)", item_type_names.map(&:downcase))
-                                  .exists?
-
-    return true unless has_specified_types
-
-    # If it has these types, ensure ONLY these types are present
-    all_item_types = resource.items.joins(:item_type).pluck("LOWER(item_types.name)").uniq
-
-    all_item_types.all? { |type| item_type_names.map(&:downcase).include?(type) }
-  end
-
-  def get_nested_value(object, path)
-    return nil unless object
-
-    parts = path.to_s.split(".")
-    parts.shift if parts.first&.downcase == object.class.name.downcase
-
-    parts.reduce(object) do |obj, method|
-      return nil if obj.nil?
-      begin
-        obj.send(method)
-      rescue
-        nil
-      end
-    end
-  end
+  # ========================================
+  # VIOLATION CREATION
+  # ========================================
 
   def create_violation(rule_code, rule_config, resource)
-    context = build_context(resource, rule_config["validation"])
-
+    validator = Validators.for(rule_config["validation"]["type"], resource, rule_config["validation"])
     ComplianceViolation.new(
-      rule_code: rule_code,
-      severity: rule_config["severity"] || "error",
-      message: rule_config["message"],
-      help: rule_config["help"],
-      resource: resource,
-      context: context
+      rule_code: rule_code, severity: rule_config["severity"] || "error",
+      message: rule_config["message"], help: rule_config["help"],
+      resource: resource, context: validator&.context || {}
     )
   end
 
   def create_system_violation(rule_code, rule_config)
-    context = {}
-
-    # Add specific context for system-level violations
-    validation_type = rule_config["validation"]["type"]
-
-    if validation_type == "min_light_breakers"
-      min_value = rule_config["validation"]["min_value"] || 2
-      actual_count = Breaker.joins(items: :item_type)
-                            .where(item_types: { name: "light" })
-                            .distinct
-                            .count
-      context = {
-        actual_count: actual_count,
-        min_value: min_value
-      }
-    elsif validation_type == "min_shutter_breakers"
-      min_value = rule_config["validation"]["min_value"] || 1
-      actual_count = Breaker.joins(items: :item_type)
-                            .where(item_types: { name: "roller shutters" })
-                            .distinct
-                            .count
-      context = {
-        actual_count: actual_count,
-        min_value: min_value
-      }
-    elsif validation_type == "min_appliance_circuits"
-      min_value = rule_config["validation"]["min_value"] || 3
-      appliance_types = rule_config["validation"]["appliance_types"] || [ "dishwasher", "washing machine", "dryer", "oven" ]
-
-      actual_count = Breaker.joins(items: :item_type)
-                            .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
-                            .distinct
-                            .count
-      context = {
-        actual_count: actual_count,
-        min_value: min_value,
-        appliance_types: appliance_types.join(", ")
-      }
-    end
-
-    # Create a pseudo-resource for system-level violations
-    system_resource = OpenStruct.new(id: 0, class: OpenStruct.new(name: "System"))
-
     ComplianceViolation.new(
-      rule_code: rule_code,
-      severity: rule_config["severity"] || "error",
-      message: rule_config["message"],
-      help: rule_config["help"],
-      resource: system_resource,
-      context: context
+      rule_code: rule_code, severity: rule_config["severity"] || "error",
+      message: rule_config["message"], help: rule_config["help"],
+      resource: OpenStruct.new(id: 0, class: OpenStruct.new(name: "System")),
+      context: build_system_context(rule_config["validation"])
     )
   end
 
   def create_dwelling_violation(rule_code, rule_config, dwelling)
-    context = {}
-
-    # Add specific context for dwelling-level violations
-    validation_type = rule_config["validation"]["type"]
-
-    if validation_type == "min_shutter_breakers"
-      min_value = rule_config["validation"]["min_value"] || 1
-      actual_count = Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
-                            .where(dwellings: { id: dwelling.id })
-                            .where(item_types: { name: "roller shutters" })
-                            .distinct
-                            .count
-      context = {
-        actual_count: actual_count,
-        min_value: min_value
-      }
-    elsif validation_type == "min_appliance_circuits"
-      min_value = rule_config["validation"]["min_value"] || 3
-      appliance_types = rule_config["validation"]["appliance_types"] || [ "dishwasher", "washing machine", "dryer", "oven" ]
-
-      actual_count = Breaker.joins(residual_current_device: { electrical_panel: :dwelling }, items: :item_type)
-                            .where(dwellings: { id: dwelling.id })
-                            .where("LOWER(item_types.name) IN (?)", appliance_types.map(&:downcase))
-                            .distinct
-                            .count
-      context = {
-        actual_count: actual_count,
-        min_value: min_value,
-        appliance_types: appliance_types.join(", ")
-      }
-    elsif validation_type == "surge_protection_required"
-      reason = surge_protection_reason(dwelling)
-      context = { reason: reason }
-    end
-
     ComplianceViolation.new(
-      rule_code: rule_code,
-      severity: rule_config["severity"] || "error",
-      message: rule_config["message"],
-      help: rule_config["help"],
-      resource: dwelling,
-      context: context
+      rule_code: rule_code, severity: rule_config["severity"] || "error",
+      message: rule_config["message"], help: rule_config["help"],
+      resource: dwelling, context: build_dwelling_context(dwelling, rule_config["validation"])
     )
+  end
+
+  def build_system_context(validation)
+    case validation["type"]
+    when "min_light_breakers"
+      { actual_count: breakers_with_type(ITEM_TYPES[:light]), min_value: validation["min_value"] || 2 }
+    when "min_shutter_breakers"
+      { actual_count: breakers_with_type(ITEM_TYPES[:shutter]), min_value: validation["min_value"] || 1 }
+    when "min_appliance_circuits"
+      types = validation["appliance_types"] || HIGH_POWER_APPLIANCES
+      { actual_count: breakers_with_any_type(types), min_value: validation["min_value"] || 3, appliance_types: types.join(", ") }
+    else {}
+    end
+  end
+
+  def build_dwelling_context(dwelling, validation)
+    case validation["type"]
+    when "min_shutter_breakers"
+      { actual_count: dwelling_breakers_with_type(dwelling, ITEM_TYPES[:shutter]), min_value: validation["min_value"] || 1 }
+    when "min_appliance_circuits"
+      types = validation["appliance_types"] || HIGH_POWER_APPLIANCES
+      { actual_count: dwelling_breakers_with_any_type(dwelling, types), min_value: validation["min_value"] || 3, appliance_types: types.join(", ") }
+    when "surge_protection_required"
+      { reason: surge_protection_reason(dwelling) }
+    when "min_rcd_count"
+      { actual_count: dwelling_rcds(dwelling), min_value: validation["min_value"] || 2 }
+    when "min_rcd_type_count"
+      { actual_count: dwelling_rcds_of_type(dwelling, validation["rcd_type"]), min_value: validation["min_value"] || 1, rcd_type: validation["rcd_type"] }
+    else {}
+    end
   end
 
   def surge_protection_reason(dwelling)
     reasons = []
-
     reasons << "has lightning protection" if dwelling.has_lightning_protection
-
     if dwelling.in_aq2_zone?
       reasons << "overhead power line in AQ2 zone" if dwelling.has_overhead_power_line
       reasons << "safety-critical persons in AQ2 zone" if dwelling.has_safety_critical_persons
     end
-
-    if dwelling.outside_aq2_zone?
-      reasons << "sensitive equipment outside AQ2 zone" if dwelling.has_sensitive_equipment
-    end
-
+    reasons << "sensitive equipment outside AQ2 zone" if dwelling.outside_aq2_zone? && dwelling.has_sensitive_equipment
     reasons.join(", ")
-  end
-
-  def build_context(resource, validation)
-    context = {}
-    return context if validation.nil?
-
-    validation_type = validation["type"]
-
-    case validation_type
-    when "exclusive_type"
-      # Add non-matching items to context
-      if resource.respond_to?(:items)
-        required_type = validation["required_type"]
-        non_matching_items = resource.items.joins(:item_type)
-                                  .where.not(item_types: { name: required_type })
-                                  .map { |item| item.item_type.name }
-
-        # Use appropriate context key based on required type
-        context_key = "non_#{required_type}_items".to_sym
-        context[context_key] = non_matching_items.join(", ")
-
-        # Keep backwards compatibility for light breakers
-        if required_type == "light"
-          context[:non_light_items] = non_matching_items.join(", ")
-        elsif required_type == "socket"
-          context[:non_socket_items] = non_matching_items.join(", ")
-        end
-      end
-
-    when "max_count"
-      attribute = validation["attribute"]
-      max_value = validation["max_value"]
-
-      actual_count = case attribute
-      when "light_items"
-        resource.items.joins(:item_type).where(item_types: { name: "light" }).count
-      when "socket_items"
-        resource.items.joins(:item_type).where(item_types: { name: "socket" }).count
-      else
-        0
-      end
-
-      context[:actual_count] = actual_count
-      context[:max_value] = max_value
-
-    when "max_attribute"
-      attribute = validation["attribute"]
-      max_value = validation["max_value"]
-      actual_value = resource.send(attribute) rescue nil
-
-      context[:actual_value] = actual_value
-      context[:max_value] = max_value
-
-    when "attribute_in_list"
-      attribute = validation["attribute"]
-      allowed_values = validation["allowed_values"]
-      actual_value = resource.send(attribute) rescue nil
-
-      context[:actual_value] = actual_value
-      context[:allowed_values] = allowed_values.join(", ")
-
-    when "association_attribute"
-      path = validation["path"]
-      expected_value = validation["must_equal"]
-      actual_value = get_nested_value(resource, path)
-
-      context[:actual_value] = actual_value
-      context[:expected_value] = expected_value
-
-    when "association_count"
-      association = validation["association"]
-      max_count = validation["max_count"]
-      actual_count = resource.send(association).count rescue 0
-
-      context[:actual_count] = actual_count
-      context[:max_count] = max_count
-
-    when "load_calculation"
-      full_load_types = validation["full_load_types"] || []
-      breakers = resource.breakers.includes(items: :item_type)
-
-      full_load_sum = 0
-      partial_load_sum = 0
-
-      breakers.each do |breaker|
-        next if breaker.items.empty?
-
-        has_full_load_item = breaker.items.any? do |item|
-          full_load_types.include?(item.item_type.name.downcase)
-        end
-
-        if has_full_load_item
-          full_load_sum += breaker.output_max_current
-        else
-          partial_load_sum += breaker.output_max_current
-        end
-      end
-
-      total_required = full_load_sum + (partial_load_sum * 0.5)
-
-      context[:rcd_current] = resource.output_max_current
-      context[:required_current] = total_required.round(1)
-      context[:full_load_sum] = full_load_sum
-      context[:partial_load_sum] = partial_load_sum
-
-    when "min_cable_section"
-      path = validation["path"]
-      min_section = validation["min_section"]
-      actual_value = get_nested_value(resource, path)
-
-      context[:actual_value] = actual_value
-      context[:min_section] = min_section
-
-    when "max_total_power"
-      item_type_name = validation["item_type"]
-      max_power = validation["max_power"]
-
-      total_power = resource.items.joins(:item_type)
-                            .where("LOWER(item_types.name) = ?", item_type_name.downcase)
-                            .sum(:power_watts)
-
-      context[:total_power] = total_power
-      context[:max_power] = max_power
-      context[:item_type] = item_type_name
-
-    when "breaker_exclusive_for_type"
-      item_type_names = validation["item_types"]
-
-      all_item_types = resource.items.joins(:item_type).pluck("item_types.name").uniq
-      non_allowed_types = all_item_types.reject { |type| item_type_names.map(&:downcase).include?(type.downcase) }
-
-      context[:required_types] = item_type_names.join(", ")
-      context[:non_allowed_items] = non_allowed_types.join(", ")
-    end
-
-    context
   end
 end

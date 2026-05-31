@@ -172,31 +172,21 @@ breaker_rules:
     message: "Kitchen socket breaker has {actual_count} sockets (maximum {max_value} allowed)"
     help: "Kitchen circuits are limited to 6 sockets maximum"
 
-  shutter_max_current:
+  shutter_current_cable_combo:
     applies_to: Breaker
-    description: "Shutter breakers must be maximum 16A"
+    description: "Shutter breakers must be 16A/1.5mm² or 20A/2.5mm²"
     condition:
       type: has_shutter_items
     validation:
-      type: max_attribute
-      attribute: output_max_current
-      max_value: 16
+      type: current_cable_combo
+      allowed_combos:
+        - max_current: 16
+          min_cable: 1.5
+        - max_current: 20
+          min_cable: 2.5
     severity: error
-    message: "Shutter breaker must be maximum 16A (currently: {actual_value}A)"
-    help: "Change breaker amperage to 16A or lower for shutters"
-
-  shutter_cable:
-    applies_to: Breaker
-    description: "Shutter breakers must use minimum 1.5 mm² cable"
-    condition:
-      type: has_shutter_items
-    validation:
-      type: min_cable_section
-      path: breaker.output_cable.section
-      min_section: 1.5
-    severity: error
-    message: "Shutter breaker must use minimum 1.5 mm² cable (currently: {actual_value} mm²)"
-    help: "Change the output cable to 1.5 mm² or larger for shutters"
+    message: "Shutter breaker has invalid current/cable combination ({actual_current}A / {actual_cable}mm²)"
+    help: "Use either 16A breaker with 1.5mm² cable or 20A breaker with 2.5mm² cable"
 
   convector_exclusive:
     applies_to: Breaker
@@ -210,44 +200,30 @@ breaker_rules:
     message: "Convector breakers must only contain convectors (found: {non_allowed_items})"
     help: "Move non-convector items to another breaker"
 
-  convector_max_power:
+  convector_power_current_cable:
     applies_to: Breaker
-    description: "Convector breakers can have maximum 4500W total power"
+    description: "Convector breaker power/current/cable must match NF C 15-100 table"
     condition:
       type: has_convector_items
     validation:
-      type: max_total_power
+      type: power_current_cable_combo
       item_type: "convector"
-      max_power: 4500
+      allowed_combos:
+        - max_power: 3500
+          max_current: 16
+          min_cable: 1.5
+        - max_power: 4500
+          max_current: 20
+          min_cable: 2.5
+        - max_power: 5750
+          max_current: 25
+          min_cable: 4
+        - max_power: 7250
+          max_current: 32
+          min_cable: 6
     severity: error
-    message: "Convector breaker has {total_power}W (maximum {max_power}W allowed)"
-    help: "Split convectors across multiple breakers or reduce total power"
-
-  convector_max_current:
-    applies_to: Breaker
-    description: "Convector breakers must be maximum 20A"
-    condition:
-      type: has_convector_items
-    validation:
-      type: max_attribute
-      attribute: output_max_current
-      max_value: 20
-    severity: error
-    message: "Convector breaker must be maximum 20A (currently: {actual_value}A)"
-    help: "Change breaker amperage to 20A or lower"
-
-  convector_min_cable:
-    applies_to: Breaker
-    description: "Convector breakers must use minimum 2.5 mm² cable"
-    condition:
-      type: has_convector_items
-    validation:
-      type: min_cable_section
-      path: breaker.output_cable.section
-      min_section: 2.5
-    severity: error
-    message: "Convector breaker must use minimum 2.5 mm² cable (currently: {actual_value} mm²)"
-    help: "Change the output cable to 2.5 mm² or larger"
+    message: "Convector breaker has invalid power/current/cable combination ({total_power}W / {actual_current}A)"
+    help: "Match power to breaker: ≤3500W→16A/1.5mm², ≤4500W→20A/2.5mm², ≤5750W→25A/4mm², ≤7250W→32A/6mm²"
 
   appliance_exclusive:
     applies_to: Breaker
@@ -325,6 +301,97 @@ breaker_rules:
     message: "Cooktop breaker must use minimum 6 mm² cable (currently: {actual_value} mm²)"
     help: "Change the output cable to 6 mm² or larger"
 
+  ev_charger_exclusive:
+    applies_to: Breaker
+    description: "EV charger breakers must be dedicated (EV charger only)"
+    condition:
+      type: has_ev_charger_items
+    validation:
+      type: breaker_exclusive_for_type
+      item_types: ["ev charger"]
+    severity: error
+    message: "EV charger breakers must only contain EV chargers (found: {non_allowed_items})"
+    help: "Move non-EV charger items to another breaker"
+
+  ev_charger_current_cable:
+    applies_to: Breaker
+    description: "EV charger breakers must be 20A with 2.5mm² cable"
+    condition:
+      type: has_ev_charger_items
+    validation:
+      type: current_cable_combo
+      allowed_combos:
+        - max_current: 20
+          min_cable: 2.5
+    severity: error
+    message: "EV charger breaker has invalid current/cable ({actual_current}A)"
+    help: "EV charger circuit requires 20A breaker with 2.5mm² cable"
+
+  water_heater_exclusive:
+    applies_to: Breaker
+    description: "Water heater breakers must be dedicated (water heater only)"
+    condition:
+      type: has_water_heater_items
+    validation:
+      type: breaker_exclusive_for_type
+      item_types: ["water heater"]
+    severity: error
+    message: "Water heater breakers must only contain water heaters (found: {non_allowed_items})"
+    help: "Move non-water heater items to another breaker"
+
+  water_heater_current_cable:
+    applies_to: Breaker
+    description: "Water heater breakers must be 20A with 2.5mm² cable"
+    condition:
+      type: has_water_heater_items
+    validation:
+      type: current_cable_combo
+      allowed_combos:
+        - max_current: 20
+          min_cable: 2.5
+    severity: error
+    message: "Water heater breaker has invalid current/cable ({actual_current}A)"
+    help: "Water heater circuit requires 20A breaker with 2.5mm² cable"
+
+  freezer_exclusive:
+    applies_to: Breaker
+    description: "Freezer breakers should be dedicated (freezer only) - recommended"
+    condition:
+      type: has_freezer_items
+    validation:
+      type: breaker_exclusive_for_type
+      item_types: ["freezer"]
+    severity: warning
+    message: "Freezer breakers should only contain freezers for food safety (found: {non_allowed_items})"
+    help: "Move non-freezer items to another breaker to ensure food preservation during partial outages"
+
+  freezer_current_cable:
+    applies_to: Breaker
+    description: "Freezer breakers must be 16A with 2.5mm² cable"
+    condition:
+      type: has_freezer_items
+    validation:
+      type: current_cable_combo
+      allowed_combos:
+        - max_current: 16
+          min_cable: 2.5
+    severity: error
+    message: "Freezer breaker has invalid current/cable ({actual_current}A)"
+    help: "Freezer circuit requires 16A breaker with 2.5mm² cable"
+
+  shutter_max_count:
+    applies_to: Breaker
+    description: "Shutter breakers can have maximum 8 roller shutters"
+    condition:
+      type: has_shutter_items
+    validation:
+      type: max_count
+      attribute: shutter_items
+      max_value: 8
+    severity: error
+    message: "Shutter breaker has {actual_count} shutters (maximum {max_value} allowed)"
+    help: "Remove excess shutters or split across multiple breakers"
+
 # ========================================
 # ITEM RULES
 # ========================================
@@ -359,17 +426,17 @@ item_rules:
 
   ev_charger_rcd_type:
     applies_to: Item
-    description: "EV charger must be connected to RCD type A"
+    description: "EV charger must be connected to RCD type A or F (monophasé)"
     condition:
       type: item_type_equals
       value: ev charger
     validation:
-      type: association_attribute
+      type: association_attribute_in_list
       path: breaker.residual_current_device.residual_current_device_type.name
-      must_equal: "A"
+      allowed_values: ["A", "F"]
     severity: error
-    message: "EV charger must be connected to RCD type A (currently: {actual_value})"
-    help: "Connect this EV charger to a breaker under an RCD type A"
+    message: "EV charger must be connected to RCD type A or F (currently: {actual_value})"
+    help: "Connect this EV charger to a breaker under an RCD type A or type F"
 
 # ========================================
 # RCD RULES
@@ -443,3 +510,81 @@ system_rules:
     severity: error
     message: "Surge protection is required but not installed ({reason})"
     help: "Install a surge protection device (parafoudre) in the electrical panel"
+
+  min_rcds:
+    applies_to: Dwelling
+    description: "Dwelling must have at least 2 RCDs (30 mA)"
+    validation:
+      type: min_rcd_count
+      min_value: 2
+    severity: error
+    message: "Dwelling has {actual_count} RCD(s) (minimum 2 required)"
+    help: "Install at least 2 RCDs (interrupteurs différentiels 30 mA) in the electrical panel"
+
+  min_rcd_type_a:
+    applies_to: Dwelling
+    description: "Dwelling must have at least 1 RCD of type A"
+    validation:
+      type: min_rcd_type_count
+      rcd_type: "A"
+      min_value: 1
+    severity: error
+    message: "Dwelling has {actual_count} RCD(s) of type A (minimum 1 required)"
+    help: "Install at least 1 RCD of type A for circuits with washing machine, cooktop, or EV charger"
+
+# ========================================
+# ROOM RULES
+# ========================================
+room_rules:
+  living_room_min_sockets:
+    applies_to: Room
+    description: "Living room must have minimum sockets based on surface area (1 per 4m², min 5)"
+    condition:
+      type: room_type_equals
+      value: living_room
+    validation:
+      type: min_sockets_by_area
+      min_sockets: 5
+      sockets_per_m2: 0.25
+    severity: error
+    message: "Living room '{room_name}' has {actual_count} socket(s) (minimum {min_required} required for {surface_area}m²)"
+    help: "Add more sockets to meet NF C 15-100 requirements (1 socket per 4m², minimum 5)"
+
+  bedroom_min_sockets:
+    applies_to: Room
+    description: "Bedroom must have minimum 3 sockets"
+    condition:
+      type: room_type_equals
+      value: bedroom
+    validation:
+      type: min_sockets
+      min_value: 3
+    severity: error
+    message: "Bedroom '{room_name}' has {actual_count} socket(s) (minimum 3 required)"
+    help: "Add more sockets to meet NF C 15-100 requirements (minimum 3 per bedroom)"
+
+  kitchen_min_sockets:
+    applies_to: Room
+    description: "Kitchen must have minimum 6 sockets"
+    condition:
+      type: room_type_equals
+      value: kitchen
+    validation:
+      type: min_sockets
+      min_value: 6
+    severity: error
+    message: "Kitchen '{room_name}' has {actual_count} socket(s) (minimum 6 required)"
+    help: "Add more sockets to meet NF C 15-100 requirements (minimum 6 per kitchen)"
+
+  other_room_min_sockets:
+    applies_to: Room
+    description: "Rooms larger than 4m² must have at least 1 socket"
+    condition:
+      type: room_larger_than
+      min_area: 4
+    validation:
+      type: min_sockets
+      min_value: 1
+    severity: error
+    message: "Room '{room_name}' ({surface_area}m²) has no sockets (minimum 1 required for rooms > 4m²)"
+    help: "Add at least 1 socket for rooms larger than 4m²"
